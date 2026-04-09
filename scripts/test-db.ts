@@ -10,15 +10,57 @@ async function main() {
     const result = await prisma.$queryRawUnsafe<{ now: Date }[]>("SELECT NOW()");
     console.log("Connected! Server time:", result[0].now);
 
-    const userCount = await prisma.user.count();
-    console.log("Users in database:", userCount);
+    // --- Demo User ---
+    const user = await prisma.user.findUnique({
+      where: { email: "demo@devstash.io" },
+    });
+    console.log("\n--- Demo User ---");
+    console.log(`  Name: ${user?.name}`);
+    console.log(`  Email: ${user?.email}`);
+    console.log(`  Pro: ${user?.isPro}`);
+    console.log(`  Verified: ${user?.emailVerified}`);
 
-    const itemTypeCount = await prisma.itemType.count();
-    console.log("Item types in database:", itemTypeCount);
+    // --- Item Types ---
+    const itemTypes = await prisma.itemType.findMany({
+      where: { isSystem: true },
+      orderBy: { name: "asc" },
+    });
+    console.log(`\n--- System Item Types (${itemTypes.length}) ---`);
+    for (const t of itemTypes) {
+      console.log(`  ${t.icon.padEnd(12)} ${t.name.padEnd(10)} ${t.color}`);
+    }
 
-    console.log("\nDatabase connection test passed!");
+    // --- Collections with item counts ---
+    const collections = await prisma.collection.findMany({
+      include: { _count: { select: { items: true } } },
+      orderBy: { name: "asc" },
+    });
+    console.log(`\n--- Collections (${collections.length}) ---`);
+    for (const c of collections) {
+      console.log(`  ${c.name.padEnd(22)} ${c._count.items} items`);
+    }
+
+    // --- Items by type ---
+    const items = await prisma.item.findMany({
+      include: { itemType: true },
+      orderBy: { createdAt: "desc" },
+    });
+    console.log(`\n--- Items (${items.length}) ---`);
+    for (const item of items) {
+      const flags = [
+        item.isPinned ? "📌" : "",
+        item.isFavorite ? "⭐" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      console.log(
+        `  [${item.itemType.name.padEnd(7)}] ${item.title}${flags ? " " + flags : ""}`
+      );
+    }
+
+    console.log("\nDatabase test passed!");
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("Database test failed:", error);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

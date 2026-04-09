@@ -6,21 +6,16 @@ In Progress
 
 ## Goals
 
-- Set up Prisma ORM with Neon PostgreSQL (serverless)
-- Create initial schema based on data models in project-overview.md
-- Include NextAuth models (Account, Session, VerificationToken)
-- Add appropriate indexes and cascade deletes
-- Use Prisma 7 (with breaking changes from upgrade guide)
-- Use migrations (`prisma migrate dev`), never `db push`
-- Configure development and production database branches
+- Seed the database with demo data for development
+- Create a demo user (demo@devstash.io, hashed password with bcryptjs)
+- Seed 7 system item types (Snippet, Prompt, Command, Note, File, Image, Link)
+- Seed 5 collections with items: React Patterns, AI Workflows, DevOps, Terminal Commands, Design Resources
+- Override existing seed file (prisma/seed.ts) with full seed data
 
 ## Notes
 
-- Spec: @context/features/database-spec.md
-- Data models reference: @context/project-overview.md
-- Database standards: @context/coding-standards.md
-- Prisma 7 upgrade guide: https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7
-- Setup guide: https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres
+- Spec: @context/features/seed-spec.md
+- Existing seed file: @prisma/seed.ts (currently only seeds item types, will be overridden)
 
 ## History
 
