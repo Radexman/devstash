@@ -2,21 +2,25 @@
 
 ## Status
 
-Completed
+In Progress
 
 ## Goals
 
-- Main area content to the right of sidebar
-- Recent collections section
-- Pinned items section
-- 10 recent items section
-- 4 stats cards at the top (items count, collections count, favorite items, favorite collections)
+- Set up Prisma ORM with Neon PostgreSQL (serverless)
+- Create initial schema based on data models in project-overview.md
+- Include NextAuth models (Account, Session, VerificationToken)
+- Add appropriate indexes and cascade deletes
+- Use Prisma 7 (with breaking changes from upgrade guide)
+- Use migrations (`prisma migrate dev`), never `db push`
+- Configure development and production database branches
 
 ## Notes
 
-- Spec: @context/features/dashboard-phase-3-spec.md
-- Screenshot reference: @context/screenshots/dashboard-ui-main.png
-- Data source: @src/lib/mock-data.js (direct import, no DB yet)
+- Spec: @context/features/database-spec.md
+- Data models reference: @context/project-overview.md
+- Database standards: @context/coding-standards.md
+- Prisma 7 upgrade guide: https://www.prisma.io/docs/orm/more/upgrade-guides/upgrading-versions/upgrading-to-prisma-7
+- Setup guide: https://www.prisma.io/docs/getting-started/prisma-orm/quickstart/prisma-postgres
 
 ## History
 
