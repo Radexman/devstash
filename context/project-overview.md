@@ -22,12 +22,12 @@ The result: constant context switching, lost knowledge, and inconsistent workflo
 
 ## 👥 Target Users
 
-| Persona | Needs |
-|---|---|
-| **Everyday Developer** | Quick access to snippets, prompts, commands, and links |
-| **AI-first Developer** | A home for prompts, contexts, workflows, and system messages |
-| **Content Creator / Educator** | Organized code blocks, explanations, and course notes |
-| **Full-stack Builder** | Reusable patterns, boilerplates, and API examples |
+| Persona                        | Needs                                                        |
+| ------------------------------ | ------------------------------------------------------------ |
+| **Everyday Developer**         | Quick access to snippets, prompts, commands, and links       |
+| **AI-first Developer**         | A home for prompts, contexts, workflows, and system messages |
+| **Content Creator / Educator** | Organized code blocks, explanations, and course notes        |
+| **Full-stack Builder**         | Reusable patterns, boilerplates, and API examples            |
 
 ---
 
@@ -37,15 +37,15 @@ The result: constant context switching, lost knowledge, and inconsistent workflo
 
 Items are the atomic unit of DevStash. Each item has a **type**. Users can create custom types later, but the MVP ships with these **system types** (immutable):
 
-| Type | Icon | Color | Category | Plan |
-|---|---|---|---|---|
-| Snippet | `Code` | `#3b82f6` (blue) | text | Free |
-| Prompt | `Sparkles` | `#8b5cf6` (purple) | text | Free |
-| Command | `Terminal` | `#f97316` (orange) | text | Free |
-| Note | `StickyNote` | `#fde047` (yellow) | text | Free |
-| Link | `Link` | `#10b981` (emerald) | url | Free |
-| File | `File` | `#6b7280` (gray) | file | **Pro** |
-| Image | `Image` | `#ec4899` (pink) | file | **Pro** |
+| Type    | Icon         | Color               | Category | Plan    |
+| ------- | ------------ | ------------------- | -------- | ------- |
+| Snippet | `Code`       | `#3b82f6` (blue)    | text     | Free    |
+| Prompt  | `Sparkles`   | `#8b5cf6` (purple)  | text     | Free    |
+| Command | `Terminal`   | `#f97316` (orange)  | text     | Free    |
+| Note    | `StickyNote` | `#fde047` (yellow)  | text     | Free    |
+| Link    | `Link`       | `#10b981` (emerald) | url      | Free    |
+| File    | `File`       | `#6b7280` (gray)    | file     | **Pro** |
+| Image   | `Image`      | `#ec4899` (pink)    | file     | **Pro** |
 
 **Content categories:** `text` (snippet, prompt, note, command), `url` (link), `file` (file, image).
 
@@ -58,10 +58,11 @@ Items are quick to access and create via a **drawer UI**.
 Collections group items of any type. Items can belong to **multiple collections** (many-to-many).
 
 Examples:
-- *React Patterns* — snippets + notes
-- *Context Files* — files only
-- *Python Snippets* — snippets only
-- *Interview Prep* — mixed
+
+- _React Patterns_ — snippets + notes
+- _Context Files_ — files only
+- _Python Snippets_ — snippets only
+- _Interview Prep_ — mixed
 
 ### C. Search
 
@@ -217,22 +218,27 @@ model Tag {
 ## 🛠️ Tech Stack
 
 ### Framework & Language
+
 - **[Next.js 16](https://nextjs.org/)** / **React 19** — SSR pages with dynamic components, API routes for backend, single codebase
 - **[TypeScript](https://www.typescriptlang.org/)** — type safety end-to-end
 
 ### Database & ORM
+
 - **[Neon](https://neon.tech/)** — serverless Postgres in the cloud
 - **[Prisma 7](https://www.prisma.io/docs)** (latest — check docs) — ORM and migrations
 - **Redis** — optional, for caching
 
 ### Storage & Auth
+
 - **[Cloudflare R2](https://developers.cloudflare.com/r2/)** — file uploads (files, images)
 - **[NextAuth v5](https://authjs.dev/)** — Email/password + GitHub OAuth
 
 ### AI
+
 - **[OpenAI `gpt-5-nano`](https://platform.openai.com/docs)** — tagging, summaries, code explanation, prompt optimization
 
 ### Styling & UI
+
 - **[Tailwind CSS v4](https://tailwindcss.com/)**
 - **[shadcn/ui](https://ui.shadcn.com/)** — component library
 - **[Lucide](https://lucide.dev/)** — icons (matches shadcn)
@@ -241,19 +247,19 @@ model Tag {
 
 ## 💰 Monetization (Freemium)
 
-| | **Free** | **Pro — $8/mo or $72/yr** |
-|---|---|---|
-| Items | 50 total | Unlimited |
-| Collections | 3 | Unlimited |
-| System types | All except File & Image | All |
-| File & Image uploads | ❌ | ✅ |
-| Custom types | ❌ | ✅ (later) |
-| Search | Basic | Basic |
-| AI auto-tagging | ❌ | ✅ |
-| AI code explanation | ❌ | ✅ |
-| AI prompt optimizer | ❌ | ✅ |
-| Export (JSON / ZIP) | ❌ | ✅ |
-| Support | Community | Priority |
+|                      | **Free**                | **Pro — $8/mo or $72/yr** |
+| -------------------- | ----------------------- | ------------------------- |
+| Items                | 50 total                | Unlimited                 |
+| Collections          | 3                       | Unlimited                 |
+| System types         | All except File & Image | All                       |
+| File & Image uploads | ❌                      | ✅                        |
+| Custom types         | ❌                      | ✅ (later)                |
+| Search               | Basic                   | Basic                     |
+| AI auto-tagging      | ❌                      | ✅                        |
+| AI code explanation  | ❌                      | ✅                        |
+| AI prompt optimizer  | ❌                      | ✅                        |
+| Export (JSON / ZIP)  | ❌                      | ✅                        |
+| Support              | Community               | Priority                  |
 
 > 🛠️ **Development note:** scaffold Pro gating from day one, but keep **all features unlocked for all users during development**.
 
@@ -266,6 +272,14 @@ model Tag {
 Modern, minimal, developer-focused. Dark mode default, light mode optional. Clean typography, generous whitespace, subtle borders and shadows. Syntax highlighting for all code blocks.
 
 **References:** [Notion](https://notion.so) · [Linear](https://linear.app) · [Raycast](https://raycast.com)
+
+### Screenshots
+
+Refer to the screenshots below as a base base for the dashboard ui. It does not have to be exact.
+Use it as a reference
+
+- @context/screenshots/dashboard-ui-main.png
+- @context/screenshots/dashboard-ui-drawer.png
 
 ### Layout
 

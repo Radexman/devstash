@@ -16,4 +16,4 @@
 
 ## History
 
-<!-- Keep this updated. Earliest to latest -->
+- 2026-04-09: Initial Next.js 16 + Tailwind v4 setup, removed boilerplate assets, added project context files
