@@ -27,7 +27,8 @@ import {
 } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { itemTypes, collections, currentUser } from '@/lib/mock-data';
+import type { SidebarItemType } from '@/lib/db/items';
+import type { SidebarCollection } from '@/lib/db/collections';
 import type { LucideIcon } from 'lucide-react';
 
 const iconMap: Record<string, LucideIcon> = {
@@ -40,21 +41,20 @@ const iconMap: Record<string, LucideIcon> = {
 	Link: LinkIcon,
 };
 
-function getInitials(name: string): string {
-	return name
-		.split(' ')
-		.map((n) => n[0])
-		.join('')
-		.toUpperCase()
-		.slice(0, 2);
+interface SidebarProps {
+	itemTypes: SidebarItemType[];
+	favoriteCollections: SidebarCollection[];
+	recentCollections: SidebarCollection[];
 }
 
-const favoriteCollections = collections.filter((c) => c.isFavorite);
-const recentCollections = collections
-	.filter((c) => !c.isFavorite)
-	.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
-function SidebarContent({ collapsed }: { collapsed: boolean }) {
+function SidebarContent({
+	collapsed,
+	itemTypes,
+	favoriteCollections,
+	recentCollections,
+}: {
+	collapsed: boolean;
+} & SidebarProps) {
 	return (
 		<div className="flex h-full flex-col">
 			{/* Types section */}
@@ -111,7 +111,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 					)}
 
 					{/* Favorites */}
-					{!collapsed && (
+					{!collapsed && favoriteCollections.length > 0 && (
 						<p className="mb-1 px-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/50">
 							Favorites
 						</p>
@@ -142,10 +142,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 						)}
 					</nav>
 
-					{/* All Collections */}
-					{!collapsed && (
+					{/* Recent Collections */}
+					{!collapsed && recentCollections.length > 0 && (
 						<p className="mb-1 mt-3 px-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/50">
-							All Collections
+							Recent
 						</p>
 					)}
 					<nav className="space-y-0.5">
@@ -155,7 +155,10 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 									<TooltipTrigger
 										className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground mx-auto"
 									>
-										<FolderOpen className="h-4 w-4" />
+										<span
+											className="h-3 w-3 rounded-full"
+											style={{ backgroundColor: col.dominantColor ?? '#6b7280' }}
+										/>
 									</TooltipTrigger>
 									<TooltipContent side="right">
 										{col.name}
@@ -167,13 +170,27 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 									href="#"
 									className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
 								>
-									<FolderOpen className="h-4 w-4 shrink-0" />
+									<span
+										className="h-3 w-3 shrink-0 rounded-full"
+										style={{ backgroundColor: col.dominantColor ?? '#6b7280' }}
+									/>
 									<span className="flex-1 truncate">{col.name}</span>
 									<span className="text-xs text-muted-foreground/60">{col.itemCount}</span>
 								</Link>
 							),
 						)}
 					</nav>
+
+					{/* View all collections link */}
+					{!collapsed && (
+						<Link
+							href="/collections"
+							className="mt-2 flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
+						>
+							<FolderOpen className="h-3.5 w-3.5" />
+							View all collections
+						</Link>
+					)}
 				</div>
 			</div>
 
@@ -184,25 +201,25 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 						<TooltipTrigger className="flex items-center justify-center w-full">
 							<Avatar className="h-8 w-8">
 								<AvatarFallback className="bg-primary text-primary-foreground text-xs">
-									{getInitials(currentUser.name)}
+									DS
 								</AvatarFallback>
 							</Avatar>
 						</TooltipTrigger>
 						<TooltipContent side="right">
-							<p>{currentUser.name}</p>
-							<p className="text-xs text-muted-foreground">{currentUser.email}</p>
+							<p>Demo User</p>
+							<p className="text-xs text-muted-foreground">demo@devstash.io</p>
 						</TooltipContent>
 					</Tooltip>
 				) : (
 					<div className="flex items-center gap-3">
 						<Avatar className="h-8 w-8">
 							<AvatarFallback className="bg-primary text-primary-foreground text-xs">
-								{getInitials(currentUser.name)}
+								DS
 							</AvatarFallback>
 						</Avatar>
 						<div className="flex-1 min-w-0">
-							<p className="truncate text-sm font-medium">{currentUser.name}</p>
-							<p className="truncate text-xs text-muted-foreground">{currentUser.email}</p>
+							<p className="truncate text-sm font-medium">Demo User</p>
+							<p className="truncate text-xs text-muted-foreground">demo@devstash.io</p>
 						</div>
 						<Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
 							<Settings className="h-4 w-4" />
@@ -214,7 +231,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 	);
 }
 
-export function Sidebar() {
+export function Sidebar({ itemTypes, favoriteCollections, recentCollections }: SidebarProps) {
 	const [collapsed, setCollapsed] = useState(false);
 
 	return (
@@ -240,7 +257,12 @@ export function Sidebar() {
 						)}
 					</Button>
 				</div>
-				<SidebarContent collapsed={collapsed} />
+				<SidebarContent
+					collapsed={collapsed}
+					itemTypes={itemTypes}
+					favoriteCollections={favoriteCollections}
+					recentCollections={recentCollections}
+				/>
 			</aside>
 
 			{/* Mobile drawer */}
@@ -258,7 +280,12 @@ export function Sidebar() {
 				</SheetTrigger>
 				<SheetContent side="left" className="w-60 p-0">
 					<SheetTitle className="sr-only">Navigation</SheetTitle>
-					<SidebarContent collapsed={false} />
+					<SidebarContent
+						collapsed={false}
+						itemTypes={itemTypes}
+						favoriteCollections={favoriteCollections}
+						recentCollections={recentCollections}
+					/>
 				</SheetContent>
 			</Sheet>
 		</TooltipProvider>

@@ -62,6 +62,7 @@ async function main() {
   async function seedCollection(
     name: string,
     description: string,
+    options: { isFavorite?: boolean },
     items: {
       title: string;
       contentType: string;
@@ -74,7 +75,7 @@ async function main() {
     }[]
   ) {
     const collection = await prisma.collection.create({
-      data: { name, description, userId: user.id },
+      data: { name, description, isFavorite: options.isFavorite ?? false, userId: user.id },
     });
 
     for (const item of items) {
@@ -101,7 +102,7 @@ async function main() {
   }
 
   // React Patterns
-  await seedCollection("React Patterns", "Reusable React patterns and hooks", [
+  await seedCollection("React Patterns", "Reusable React patterns and hooks", { isFavorite: true }, [
     {
       title: "useDebounce Hook",
       contentType: "text",
@@ -196,7 +197,7 @@ export function AccordionItem({ index, title, children }: { index: number; title
   ]);
 
   // AI Workflows
-  await seedCollection("AI Workflows", "AI prompts and workflow automations", [
+  await seedCollection("AI Workflows", "AI prompts and workflow automations", {}, [
     {
       title: "Code Review Prompt",
       contentType: "text",
@@ -246,6 +247,7 @@ Focus on readability and maintainability over cleverness.`,
   await seedCollection(
     "DevOps",
     "Infrastructure and deployment resources",
+    {},
     [
       {
         title: "Multi-stage Dockerfile",
@@ -305,6 +307,7 @@ docker system prune -f`,
   await seedCollection(
     "Terminal Commands",
     "Useful shell commands for everyday development",
+    { isFavorite: true },
     [
       {
         title: "Git: Interactive rebase last N commits",
@@ -378,6 +381,7 @@ npm cache clean --force`,
   await seedCollection(
     "Design Resources",
     "UI/UX resources and references",
+    {},
     [
       {
         title: "Tailwind CSS Documentation",
