@@ -10,8 +10,8 @@ import {
 	LinkIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { items, itemTypes } from '@/lib/mock-data';
 import type { LucideIcon } from 'lucide-react';
+import type { ItemWithType } from '@/lib/db/items';
 
 const iconMap: Record<string, LucideIcon> = {
 	Code,
@@ -23,17 +23,19 @@ const iconMap: Record<string, LucideIcon> = {
 	Link: LinkIcon,
 };
 
-const pinnedItems = items.filter((item) => item.isPinned);
-
-function formatDate(dateStr: string): string {
-	return new Date(dateStr).toLocaleDateString('en-US', {
+function formatDate(date: Date): string {
+	return date.toLocaleDateString('en-US', {
 		month: 'short',
 		day: 'numeric',
 	});
 }
 
-export function PinnedItems() {
-	if (pinnedItems.length === 0) return null;
+interface PinnedItemsProps {
+	items: ItemWithType[];
+}
+
+export function PinnedItems({ items }: PinnedItemsProps) {
+	if (items.length === 0) return null;
 
 	return (
 		<section>
@@ -42,9 +44,8 @@ export function PinnedItems() {
 				<h2 className="text-lg font-semibold">Pinned</h2>
 			</div>
 			<div className="space-y-2">
-				{pinnedItems.map((item) => {
-					const type = itemTypes.find((t) => t.id === item.itemTypeId);
-					const Icon = type ? iconMap[type.icon] : null;
+				{items.map((item) => {
+					const Icon = iconMap[item.itemType.icon];
 					return (
 						<div
 							key={item.id}
@@ -53,7 +54,7 @@ export function PinnedItems() {
 							{Icon && (
 								<div
 									className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
-									style={{ backgroundColor: `${type!.color}20`, color: type!.color }}
+									style={{ backgroundColor: `${item.itemType.color}20`, color: item.itemType.color }}
 								>
 									<Icon className="h-4 w-4" />
 								</div>

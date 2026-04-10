@@ -4,7 +4,7 @@ import {
 	Star,
 	Heart,
 } from 'lucide-react';
-import { items, collections } from '@/lib/mock-data';
+import type { DashboardStats } from '@/lib/db/items';
 
 interface StatCardProps {
 	label: string;
@@ -30,35 +30,34 @@ function StatCard({ label, value, icon, color }: StatCardProps) {
 	);
 }
 
-export function StatsCards() {
-	const totalItems = items.length;
-	const totalCollections = collections.length;
-	const favoriteItems = items.filter((i) => i.isFavorite).length;
-	const favoriteCollections = collections.filter((c) => c.isFavorite).length;
+interface StatsCardsProps {
+	stats: DashboardStats;
+}
 
+export function StatsCards({ stats }: StatsCardsProps) {
 	return (
 		<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 			<StatCard
 				label="Total Items"
-				value={totalItems}
+				value={stats.totalItems}
 				icon={<Code className="h-5 w-5" />}
 				color="#3b82f6"
 			/>
 			<StatCard
 				label="Collections"
-				value={totalCollections}
+				value={stats.totalCollections}
 				icon={<FolderOpen className="h-5 w-5" />}
 				color="#8b5cf6"
 			/>
 			<StatCard
 				label="Favorite Items"
-				value={favoriteItems}
+				value={stats.favoriteItems}
 				icon={<Star className="h-5 w-5" />}
 				color="#f97316"
 			/>
 			<StatCard
 				label="Favorite Collections"
-				value={favoriteCollections}
+				value={stats.favoriteCollections}
 				icon={<Heart className="h-5 w-5" />}
 				color="#ec4899"
 			/>

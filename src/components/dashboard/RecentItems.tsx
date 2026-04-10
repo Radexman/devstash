@@ -10,8 +10,8 @@ import {
 	LinkIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { items, itemTypes } from '@/lib/mock-data';
 import type { LucideIcon } from 'lucide-react';
+import type { ItemWithType } from '@/lib/db/items';
 
 const iconMap: Record<string, LucideIcon> = {
 	Code,
@@ -23,18 +23,18 @@ const iconMap: Record<string, LucideIcon> = {
 	Link: LinkIcon,
 };
 
-const recentItems = [...items]
-	.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-	.slice(0, 10);
-
-function formatDate(dateStr: string): string {
-	return new Date(dateStr).toLocaleDateString('en-US', {
+function formatDate(date: Date): string {
+	return date.toLocaleDateString('en-US', {
 		month: 'short',
 		day: 'numeric',
 	});
 }
 
-export function RecentItems() {
+interface RecentItemsProps {
+	items: ItemWithType[];
+}
+
+export function RecentItems({ items }: RecentItemsProps) {
 	return (
 		<section>
 			<div className="mb-4 flex items-center gap-2">
@@ -42,9 +42,8 @@ export function RecentItems() {
 				<h2 className="text-lg font-semibold">Recent Items</h2>
 			</div>
 			<div className="space-y-2">
-				{recentItems.map((item) => {
-					const type = itemTypes.find((t) => t.id === item.itemTypeId);
-					const Icon = type ? iconMap[type.icon] : null;
+				{items.map((item) => {
+					const Icon = iconMap[item.itemType.icon];
 					return (
 						<div
 							key={item.id}
@@ -53,7 +52,7 @@ export function RecentItems() {
 							{Icon && (
 								<div
 									className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md"
-									style={{ backgroundColor: `${type!.color}20`, color: type!.color }}
+									style={{ backgroundColor: `${item.itemType.color}20`, color: item.itemType.color }}
 								>
 									<Icon className="h-4 w-4" />
 								</div>
@@ -81,11 +80,9 @@ export function RecentItems() {
 								)}
 							</div>
 							<div className="flex shrink-0 items-center gap-2">
-								{type && (
-									<Badge variant="outline" className="text-xs" style={{ borderColor: type.color, color: type.color }}>
-										{type.name}
-									</Badge>
-								)}
+								<Badge variant="outline" className="text-xs" style={{ borderColor: item.itemType.color, color: item.itemType.color }}>
+									{item.itemType.name}
+								</Badge>
 								<span className="text-xs text-muted-foreground">
 									{formatDate(item.updatedAt)}
 								</span>

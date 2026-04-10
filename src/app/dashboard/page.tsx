@@ -3,6 +3,7 @@ import { CollectionsSection } from '@/components/dashboard/CollectionsSection';
 import { PinnedItems } from '@/components/dashboard/PinnedItems';
 import { RecentItems } from '@/components/dashboard/RecentItems';
 import { getCollectionsForDashboard } from '@/lib/db/collections';
+import { getPinnedItems, getRecentItems, getDashboardStats } from '@/lib/db/items';
 import { prisma } from '@/lib/prisma';
 
 async function getDemoUserId(): Promise<string | null> {
@@ -15,7 +16,15 @@ async function getDemoUserId(): Promise<string | null> {
 
 export default async function DashboardPage() {
 	const userId = await getDemoUserId();
-	const collections = userId ? await getCollectionsForDashboard(userId) : [];
+
+	const [collections, pinnedItems, recentItems, stats] = userId
+		? await Promise.all([
+				getCollectionsForDashboard(userId),
+				getPinnedItems(userId),
+				getRecentItems(userId),
+				getDashboardStats(userId),
+			])
+		: [[], [], [], { totalItems: 0, totalCollections: 0, favoriteItems: 0, favoriteCollections: 0 }];
 
 	return (
 		<div className="space-y-8">
@@ -24,10 +33,10 @@ export default async function DashboardPage() {
 				<p className="text-muted-foreground">Your developer knowledge hub</p>
 			</div>
 
-			<StatsCards />
+			<StatsCards stats={stats} />
 			<CollectionsSection collections={collections} />
-			<PinnedItems />
-			<RecentItems />
+			<PinnedItems items={pinnedItems} />
+			<RecentItems items={recentItems} />
 		</div>
 	);
 }
