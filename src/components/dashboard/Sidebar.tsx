@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import {
 	Star,
 	FolderOpen,
 	ChevronLeft,
 	ChevronRight,
-	Settings,
+	LogOut,
 	PanelLeft,
 } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import {
 	Tooltip,
@@ -21,16 +21,30 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { UserAvatar } from '@/components/shared/UserAvatar';
 import { iconMap } from '@/lib/item-icons';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
 
 const PRO_TYPES = new Set(['file', 'image']);
 
+interface UserInfo {
+	name?: string | null;
+	email?: string | null;
+	image?: string | null;
+}
+
 interface SidebarProps {
 	itemTypes: SidebarItemType[];
 	favoriteCollections: SidebarCollection[];
 	recentCollections: SidebarCollection[];
+	user?: UserInfo | null;
 }
 
 function SidebarContent({
@@ -38,6 +52,7 @@ function SidebarContent({
 	itemTypes,
 	favoriteCollections,
 	recentCollections,
+	user,
 }: {
 	collapsed: boolean;
 } & SidebarProps) {
@@ -189,41 +204,54 @@ function SidebarContent({
 			{/* User area */}
 			<div className="border-t border-border p-3">
 				{collapsed ? (
-					<Tooltip>
-						<TooltipTrigger className="flex items-center justify-center w-full">
-							<Avatar className="h-8 w-8">
-								<AvatarFallback className="bg-primary text-primary-foreground text-xs">
-									DS
-								</AvatarFallback>
-							</Avatar>
-						</TooltipTrigger>
-						<TooltipContent side="right">
-							<p>Demo User</p>
-							<p className="text-xs text-muted-foreground">demo@devstash.io</p>
-						</TooltipContent>
-					</Tooltip>
+					<DropdownMenu>
+						<DropdownMenuTrigger className="flex items-center justify-center w-full">
+							<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8" />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent side="right" align="end">
+							<DropdownMenuItem
+								render={<Link href="/profile" />}
+							>
+								Profile
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
+								<LogOut className="mr-2 h-4 w-4" />
+								Sign out
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				) : (
-					<div className="flex items-center gap-3">
-						<Avatar className="h-8 w-8">
-							<AvatarFallback className="bg-primary text-primary-foreground text-xs">
-								DS
-							</AvatarFallback>
-						</Avatar>
-						<div className="flex-1 min-w-0">
-							<p className="truncate text-sm font-medium">Demo User</p>
-							<p className="truncate text-xs text-muted-foreground">demo@devstash.io</p>
-						</div>
-						<Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-							<Settings className="h-4 w-4" />
-						</Button>
-					</div>
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<button className="flex items-center gap-3 w-full min-w-0 rounded-md p-1 -m-1 hover:bg-accent transition-colors" />
+							}
+						>
+							<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8 shrink-0" />
+							<div className="flex-1 min-w-0 text-left">
+								<p className="truncate text-sm font-medium">{user?.name ?? 'User'}</p>
+								<p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+							</div>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent side="top" align="start" className="w-48">
+							<DropdownMenuItem
+								render={<Link href="/profile" />}
+							>
+								Profile
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
+								<LogOut className="mr-2 h-4 w-4" />
+								Sign out
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				)}
 			</div>
 		</div>
 	);
 }
 
-export function Sidebar({ itemTypes, favoriteCollections, recentCollections }: SidebarProps) {
+export function Sidebar({ itemTypes, favoriteCollections, recentCollections, user }: SidebarProps) {
 	const [collapsed, setCollapsed] = useState(false);
 
 	return (
@@ -254,6 +282,7 @@ export function Sidebar({ itemTypes, favoriteCollections, recentCollections }: S
 					itemTypes={itemTypes}
 					favoriteCollections={favoriteCollections}
 					recentCollections={recentCollections}
+					user={user}
 				/>
 			</aside>
 
@@ -277,6 +306,7 @@ export function Sidebar({ itemTypes, favoriteCollections, recentCollections }: S
 						itemTypes={itemTypes}
 						favoriteCollections={favoriteCollections}
 						recentCollections={recentCollections}
+						user={user}
 					/>
 				</SheetContent>
 			</Sheet>
