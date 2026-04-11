@@ -2,18 +2,11 @@
 
 ## Status
 
-In Progress
+Completed
 
 ## Goals
 
-Low-risk quick wins from codebase audit (2026-04-11):
-
-- [ ] Delete `src/lib/mock-data.ts` — 412 lines of dead code, no longer imported anywhere
-- [ ] Extract shared `iconMap` into `src/lib/item-icons.ts` — currently duplicated in Sidebar, CollectionsSection, PinnedItems, and RecentItems
-- [ ] Extract shared `formatDate` helper into `src/lib/format.ts` — duplicated in PinnedItems and RecentItems
-- [ ] Fix N+1 in `getSidebarCollections` — fetches full item+itemType graph just to compute dominant color; select only `itemType.id` and `itemType.color` like `getCollectionsForDashboard` already does
-- [ ] Replace raw `<button>` with shadcn `<Button>` in CollectionsSection "View all"
-- [ ] Add `take` limit to `getSidebarCollections` — prevents unbounded sidebar growth as users create more collections
+None — waiting for next feature.
 
 ## Notes
 
@@ -29,3 +22,4 @@ None
 - 2026-04-10: Dashboard Items — Replaced dummy item data with real Prisma queries for pinned items, recent items, and stats cards
 - 2026-04-10: Stats & Sidebar — Real data for sidebar item types with counts, favorite/recent collections with dominant color circles, "View all collections" link, seed updated with favorite collections
 - 2026-04-11: Pro Badge — Added PRO badge (shadcn/ui Badge) to File and Image types in sidebar
+- 2026-04-11: Quick Wins — Deleted dead mock-data.ts, extracted shared iconMap and formatDate, fixed N+1 in getSidebarCollections, added take limits, replaced raw button with shadcn Link+buttonVariants
