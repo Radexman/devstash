@@ -1,25 +1,16 @@
-# Current Feature: Auth Credentials — Email/Password Provider
+# Current feature
 
 ## Status
 
-In Progress
+Completed
 
 ## Goals
 
-- Add Credentials provider to split auth config pattern
-- Create registration API route at `/api/auth/register` (name, email, password, confirmPassword)
-- Validate passwords match, check for existing user, hash with bcryptjs
-- Override Credentials provider in `auth.ts` with bcrypt validation
-- Email/password sign-in works alongside existing GitHub OAuth
+None — waiting for next feature.
 
 ## Notes
 
-- Spec: `context/features/auth-phase-2-spec.md`
-- `auth.config.ts`: Add Credentials provider with `authorize: () => null` placeholder
-- `auth.ts`: Override Credentials provider with actual bcrypt validation logic
-- bcryptjs is already installed
-- `hashedPassword` field already exists on User model — no migration needed
-- Registration endpoint: `POST /api/auth/register` accepting JSON body
+None
 
 ## History
 
@@ -33,3 +24,4 @@ In Progress
 - 2026-04-11: Pro Badge — Added PRO badge (shadcn/ui Badge) to File and Image types in sidebar
 - 2026-04-11: Quick Wins — Deleted dead mock-data.ts, extracted shared iconMap and formatDate, fixed N+1 in getSidebarCollections, added take limits, replaced raw button with shadcn Link+buttonVariants
 - 2026-04-11: Auth Phase 1 — NextAuth v5 with GitHub OAuth, split config pattern, Prisma adapter with JWT, /dashboard/* route protection via proxy, Session type extended with user.id
+- 2026-04-11: Auth Phase 2 — Credentials provider with bcrypt validation, POST /api/auth/register endpoint with input validation and duplicate checking
