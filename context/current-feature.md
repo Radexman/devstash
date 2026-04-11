@@ -2,11 +2,18 @@
 
 ## Status
 
-Completed
+In Progress
 
 ## Goals
 
-None — waiting for next feature.
+Low-risk quick wins from codebase audit (2026-04-11):
+
+- [ ] Delete `src/lib/mock-data.ts` — 412 lines of dead code, no longer imported anywhere
+- [ ] Extract shared `iconMap` into `src/lib/item-icons.ts` — currently duplicated in Sidebar, CollectionsSection, PinnedItems, and RecentItems
+- [ ] Extract shared `formatDate` helper into `src/lib/format.ts` — duplicated in PinnedItems and RecentItems
+- [ ] Fix N+1 in `getSidebarCollections` — fetches full item+itemType graph just to compute dominant color; select only `itemType.id` and `itemType.color` like `getCollectionsForDashboard` already does
+- [ ] Replace raw `<button>` with shadcn `<Button>` in CollectionsSection "View all"
+- [ ] Add `take` limit to `getSidebarCollections` — prevents unbounded sidebar growth as users create more collections
 
 ## Notes
 

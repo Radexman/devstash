@@ -1,26 +1,11 @@
+import Link from 'next/link';
 import {
 	Star,
-	Code,
-	Sparkles,
-	Terminal,
-	StickyNote,
-	File,
-	Image,
-	LinkIcon,
 	MoreHorizontal,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+import { iconMap } from '@/lib/item-icons';
 import type { CollectionWithMeta } from '@/lib/db/collections';
-
-const iconMap: Record<string, LucideIcon> = {
-	Code,
-	Sparkles,
-	Terminal,
-	StickyNote,
-	File,
-	Image,
-	Link: LinkIcon,
-};
 
 interface CollectionsSectionProps {
 	collections: CollectionWithMeta[];
@@ -31,9 +16,9 @@ export function CollectionsSection({ collections }: CollectionsSectionProps) {
 		<section>
 			<div className="mb-4 flex items-center justify-between">
 				<h2 className="text-lg font-semibold">Collections</h2>
-				<button className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+				<Link href="/collections" className={buttonVariants({ variant: 'ghost', size: 'sm' })}>
 					View all
-				</button>
+				</Link>
 			</div>
 			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				{collections.map((collection) => (

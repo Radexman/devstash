@@ -8,25 +8,27 @@ export interface SidebarCollection {
   dominantColor: string | null;
 }
 
-export async function getSidebarCollections(userId: string): Promise<{
-  favorites: SidebarCollection[];
-  recents: SidebarCollection[];
-}> {
-  const collections = await prisma.collection.findMany({
-    where: { userId },
-    orderBy: { updatedAt: 'desc' },
-    include: {
-      items: {
-        include: {
-          item: {
-            include: { itemType: true },
+const sidebarCollectionSelect = {
+  id: true,
+  name: true,
+  isFavorite: true,
+  items: {
+    select: {
+      item: {
+        select: {
+          itemType: {
+            select: { id: true, color: true },
           },
         },
       },
     },
-  });
+  },
+} as const;
 
-  const mapped: SidebarCollection[] = collections.map((col) => {
+function mapSidebarCollections(
+  collections: Awaited<ReturnType<typeof prisma.collection.findMany<{ select: typeof sidebarCollectionSelect }>>>
+): SidebarCollection[] {
+  return collections.map((col) => {
     const typeCounts = new Map<string, { count: number; color: string }>();
     for (const ic of col.items) {
       const existing = typeCounts.get(ic.item.itemType.id);
@@ -54,10 +56,30 @@ export async function getSidebarCollections(userId: string): Promise<{
       dominantColor,
     };
   });
+}
+
+export async function getSidebarCollections(userId: string): Promise<{
+  favorites: SidebarCollection[];
+  recents: SidebarCollection[];
+}> {
+  const [favoriteRows, recentRows] = await Promise.all([
+    prisma.collection.findMany({
+      where: { userId, isFavorite: true },
+      orderBy: { updatedAt: 'desc' },
+      take: 5,
+      select: sidebarCollectionSelect,
+    }),
+    prisma.collection.findMany({
+      where: { userId, isFavorite: false },
+      orderBy: { updatedAt: 'desc' },
+      take: 5,
+      select: sidebarCollectionSelect,
+    }),
+  ]);
 
   return {
-    favorites: mapped.filter((c) => c.isFavorite),
-    recents: mapped.filter((c) => !c.isFavorite),
+    favorites: mapSidebarCollections(favoriteRows),
+    recents: mapSidebarCollections(recentRows),
   };
 }
 

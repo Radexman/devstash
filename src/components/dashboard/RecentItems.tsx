@@ -1,34 +1,11 @@
 import {
 	Clock,
 	Star,
-	Code,
-	Sparkles,
-	Terminal,
-	StickyNote,
-	File,
-	Image,
-	LinkIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { LucideIcon } from 'lucide-react';
+import { iconMap } from '@/lib/item-icons';
+import { formatDate } from '@/lib/format';
 import type { ItemWithType } from '@/lib/db/items';
-
-const iconMap: Record<string, LucideIcon> = {
-	Code,
-	Sparkles,
-	Terminal,
-	StickyNote,
-	File,
-	Image,
-	Link: LinkIcon,
-};
-
-function formatDate(date: Date): string {
-	return date.toLocaleDateString('en-US', {
-		month: 'short',
-		day: 'numeric',
-	});
-}
 
 interface RecentItemsProps {
 	items: ItemWithType[];

@@ -3,13 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import {
-	Code,
-	Sparkles,
-	Terminal,
-	StickyNote,
-	File,
-	Image,
-	LinkIcon,
 	Star,
 	FolderOpen,
 	ChevronLeft,
@@ -28,21 +21,11 @@ import {
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { iconMap } from '@/lib/item-icons';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
-import type { LucideIcon } from 'lucide-react';
 
-const PRO_TYPES = new Set(['File', 'Image']);
-
-const iconMap: Record<string, LucideIcon> = {
-	Code,
-	Sparkles,
-	Terminal,
-	StickyNote,
-	File,
-	Image,
-	Link: LinkIcon,
-};
+const PRO_TYPES = new Set(['file', 'image']);
 
 interface SidebarProps {
 	itemTypes: SidebarItemType[];
