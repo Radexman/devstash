@@ -1,0 +1,324 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e5]:
+      - link "Traversy Media Logo" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "Traversy Media Logo" [ref=e8]
+      - generic [ref=e10]:
+        - link "Courses" [ref=e11] [cursor=pointer]:
+          - /url: https://www.traversymedia.com/store
+        - link "eBook" [ref=e12] [cursor=pointer]:
+          - /url: https://traversymedia.com/#section-1575400154555
+        - link "Freelance Mastery" [ref=e13] [cursor=pointer]:
+          - /url: https://traversymedia.com/#section-1575400199758
+        - link "Youtube" [ref=e14] [cursor=pointer]:
+          - /url: https://traversymedia.com/#section-1672491685391
+        - link "FAQ" [ref=e15] [cursor=pointer]:
+          - /url: https://www.traversymedia.com/faq-web-development-courses-and-membership-faqs
+        - link "Blog" [ref=e16] [cursor=pointer]:
+          - /url: https://www.traversymedia.com/blog
+      - link "Log In" [ref=e20] [cursor=pointer]:
+        - /url: /login
+  - main [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e28]:
+        - generic [ref=e30]:
+          - heading "Traversy Media" [level=4] [ref=e31]
+          - heading "Web Development Courses For Everyone" [level=1] [ref=e32]:
+            - text: Web Development
+            - text: Courses For
+            - text: Everyone
+          - paragraph [ref=e33]:
+            - text: Practical project-based courses that are easy to understand and
+            - text: straight to the point with NO FLUFF
+          - button "View Courses" [ref=e34] [cursor=pointer]
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]: 
+            - heading "15+" [level=3] [ref=e40]
+            - paragraph [ref=e41]: Courses
+          - generic [ref=e42]:
+            - generic [ref=e43]: 
+            - heading "250+" [level=3] [ref=e44]
+            - paragraph [ref=e45]: Hours of Content
+          - generic [ref=e46]:
+            - generic [ref=e47]: 
+            - heading "500K+" [level=3] [ref=e48]
+            - paragraph [ref=e49]: Course Students
+      - generic [ref=e55]:
+        - heading "NOTIFY ME OF NEW COURSES" [level=4] [ref=e58]:
+          - strong [ref=e59]: NOTIFY ME OF NEW COURSES
+        - generic [ref=e63]:
+          - list
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - textbox "Email" [ref=e66]
+              - list
+            - button "NOTIFY ME" [ref=e68] [cursor=pointer]
+      - generic [ref=e78]:
+        - heading "Latest Courses" [level=2] [ref=e79]
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - generic [ref=e82]:
+              - generic [ref=e83]: 
+              - text: 16 Hours
+            - generic [ref=e84]:
+              - generic [ref=e85]: Intermediate
+              - heading "Coding With AI" [level=3] [ref=e86]
+              - text: Planning To Production
+            - link "View Course" [ref=e88] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/coding-with-ai
+          - generic [ref=e89]:
+            - generic [ref=e90]:
+              - generic [ref=e91]: 
+              - text: 25 Hours
+            - generic [ref=e92]:
+              - generic [ref=e93]: All Levels
+              - heading "Modern React From The Beginning" [level=3] [ref=e94]
+            - link "View Course" [ref=e96] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/modern-react-from-the-beginning
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e99]: 
+              - text: 22 Hours
+            - generic [ref=e100]:
+              - generic [ref=e101]: Intermediate
+              - heading "Next.js Ecommerce" [level=3] [ref=e102]
+              - text: Shopping Platform
+            - link "View Course" [ref=e104] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/nextjs-ecommerce
+        - heading "Popular Courses" [level=2] [ref=e105]
+        - generic [ref=e106]:
+          - generic [ref=e107]:
+            - generic [ref=e108]:
+              - generic [ref=e109]: 
+              - text: 24 Hours
+            - generic [ref=e110]:
+              - generic [ref=e111]: All Levels
+              - heading "Modern HTML & CSS From The Beginning 2.0" [level=3] [ref=e112]
+            - link "View Course" [ref=e114] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/modern-html-css-from-the-beginning
+          - generic [ref=e115]:
+            - generic [ref=e116]:
+              - generic [ref=e117]: 
+              - text: 37 Hours
+            - generic [ref=e118]:
+              - generic [ref=e119]: All Levels
+              - heading "Modern JavaScript From The Beginning 2.0" [level=3] [ref=e120]
+            - link "View Course" [ref=e122] [cursor=pointer]:
+              - /url: https://traversymedia.com/modern-javascript-2-0
+          - generic [ref=e123]:
+            - generic [ref=e124]:
+              - generic [ref=e125]: 
+              - text: 18 Hours
+            - generic [ref=e126]:
+              - generic [ref=e127]: All Levels
+              - heading "PHP From Scratch 2024" [level=3] [ref=e128]
+              - text: Beginner To Advanced
+            - link "View Course" [ref=e130] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/php-from-scratch
+          - generic [ref=e131]:
+            - generic [ref=e132]:
+              - generic [ref=e133]: 
+              - text: 13 Hours
+            - generic [ref=e134]:
+              - generic [ref=e135]: Beginner
+              - heading "Laravel From Scratch" [level=3] [ref=e136]
+              - text: Job Listing Website
+            - link "View Course" [ref=e138] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/laravel-from-scratch
+          - generic [ref=e139]:
+            - generic [ref=e140]:
+              - generic [ref=e141]: 
+              - text: 20 Hours
+            - generic [ref=e142]:
+              - generic [ref=e143]: All Levels
+              - heading "50 Projects in 50 Days - HTML, CSS & JavaScript" [level=3] [ref=e144]
+            - link "View Course" [ref=e146] [cursor=pointer]:
+              - /url: https://traversymedia.com/50-Projects-In-50-Days
+          - generic [ref=e147]:
+            - generic [ref=e148]:
+              - generic [ref=e149]: 
+              - text: 12.5 Hours
+            - generic [ref=e150]:
+              - generic [ref=e151]: Intermediate
+              - 'heading "70+ JS Challenges: Data Structures & Algorithms" [level=3] [ref=e152]'
+            - link "View Course" [ref=e154] [cursor=pointer]:
+              - /url: https://www.traversymedia.com/javascript-challeges
+        - link "Show All Courses" [ref=e155] [cursor=pointer]:
+          - /url: https://traversymedia.com/store
+      - generic [ref=e161]:
+        - generic [ref=e163]:
+          - heading "Join Our Premium Courses" [level=2] [ref=e164]
+          - paragraph [ref=e165]: Buy standalone courses or get access to all our courses as long as you have an active membership.
+        - generic [ref=e169]:
+          - heading "Single-Course" [level=4] [ref=e170]
+          - heading "$25/Course" [level=2] [ref=e172]
+          - paragraph [ref=e173]: Buy once, own it forever
+          - list [ref=e175]:
+            - listitem [ref=e176]:  Purchase a Specific Course
+            - listitem [ref=e177]:  Lifetime Course Access
+            - listitem [ref=e178]:  Full HD Video & HQ Audio
+            - listitem [ref=e179]:  Extra course attachments & exercises
+            - listitem [ref=e180]:  Certificate of Completion
+            - listitem [ref=e181]:  Access To Discord Community
+            - listitem [ref=e182]: " Risk-free: 15 Days Refund Period"
+          - button "BUY NOW" [ref=e183] [cursor=pointer]
+        - generic [ref=e187]:
+          - heading "Monthly Membership" [level=4] [ref=e188]
+          - heading "$25/Month" [level=2] [ref=e190]
+          - paragraph [ref=e191]: Become a Pro Member
+          - list [ref=e193]:
+            - listitem [ref=e194]:  Access To All Courses
+            - listitem [ref=e195]:  300+ Hours of Content
+            - listitem [ref=e196]:  Full HD Video & HQ Audio
+            - listitem [ref=e197]:  Extra course attachments & exercises
+            - listitem [ref=e198]:  Certificate of Completion
+            - listitem [ref=e199]:  Access To Discord Community
+            - listitem [ref=e200]:  Priority Support
+            - listitem [ref=e201]: " Risk-free: 15 Days Refund Period"
+          - button "BUY NOW" [ref=e202] [cursor=pointer]
+        - generic [ref=e206]:
+          - heading "Yearly Membership" [level=4] [ref=e207]
+          - heading "$199/Year" [level=2] [ref=e209]
+          - paragraph [ref=e210]: Become a VIP Member
+          - generic [ref=e211]:
+            - paragraph [ref=e212]: Use Code VIP and get the first year for $99!
+            - list [ref=e213]:
+              - listitem [ref=e214]:  Save 34% Compared to Monthly
+              - listitem [ref=e215]:  350+ Hours of Content
+              - listitem [ref=e216]:  Exclusive Content
+              - listitem [ref=e217]:  Full HD Video & HQ Audio
+              - listitem [ref=e218]:  Extra course attachments & exercises
+              - listitem [ref=e219]:  Certificate of Completion
+              - listitem [ref=e220]:  Access To Discord Community
+              - listitem [ref=e221]:  Priority Support
+              - listitem [ref=e222]: " Risk-free: 15 Days Refund Period"
+          - button "BUY NOW" [ref=e223] [cursor=pointer]
+      - generic [ref=e229]:
+        - img [ref=e233]
+        - img [ref=e237]
+        - img [ref=e241]
+        - img [ref=e245]
+        - img [ref=e249]
+        - img [ref=e253]
+      - generic [ref=e259]:
+        - img "Web Dev Guide To Tech, Careers and More" [ref=e263]
+        - generic [ref=e265]:
+          - heading "Brad Traversy's" [level=4] [ref=e266]
+          - heading "Web Dev Guide" [level=2] [ref=e267]
+          - paragraph [ref=e268]: The most complete guide to web development technologies on the planet.
+          - paragraph [ref=e269]: This guide also goes into different programming concepts, careers and even mental health.
+          - button "GET IT FOR $9.99" [ref=e270] [cursor=pointer]
+      - generic [ref=e276]:
+        - generic [ref=e278]:
+          - heading "New Course" [level=5] [ref=e279]
+          - heading "Freelance Mastery" [level=3] [ref=e280]:
+            - strong [ref=e282]: Freelance Mastery
+          - paragraph [ref=e283]: Brad Traversy and Kyle Prinsloo have teamed up to bring you a business-based course to show you how to create a successful freelancing business from the ground up.
+          - button "FIND OUT MORE" [ref=e284] [cursor=pointer]
+        - img "Start A Web Dev Freelance Business Course" [ref=e288]
+      - heading "Who Is Brad Traversy?" [level=2] [ref=e297]
+      - generic [ref=e303]:
+        - img "Brad Traversy Web Development Courses" [ref=e307]
+        - generic [ref=e309]:
+          - heading [level=5] [ref=e310]
+          - paragraph [ref=e311]: I started coding in 2007 at the age of 26. I became a full-time educator & content creator in 2016.
+          - paragraph [ref=e312]: I show people that they don't have to be a straight A student or a genius to learn to code. I break down complex concepts by showing you how to implement them in project-based courses and tutorials.
+      - generic [ref=e318]:
+        - img [ref=e322]
+        - img [ref=e326]
+        - img [ref=e330]
+        - img [ref=e334]
+        - img [ref=e338]
+        - img [ref=e342]
+      - generic [ref=e348]:
+        - img "Learn Web Dev on Brad Traversy's YouTube Channel" [ref=e352]
+        - generic [ref=e354]:
+          - heading "Traversy Media on YouTube" [level=2] [ref=e355]
+          - paragraph [ref=e356]:
+            - text: Our YouTube channel has over
+            - strong [ref=e357]: 2 million subscribers
+            - text: with
+            - strong [ref=e358]: 1000+
+            - text: free tutorials and crash courses
+          - button "VIEW CHANNEL" [ref=e359] [cursor=pointer]
+      - generic [ref=e367]:
+        - heading "Popular Crash Courses" [level=2] [ref=e368]
+        - paragraph [ref=e369]:
+          - text: Visit The Traversy Media
+          - link "YouTube channel" [ref=e370] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA
+          - text: for many more
+      - generic [ref=e376]:
+        - link "Web Dev Course 2023 A Practical Guide" [ref=e380] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=8sXRyHI3bLw
+          - img "Web Dev Course 2023 A Practical Guide" [ref=e381]
+        - link "React Web Dev Course" [ref=e385] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=LDB4uaJ87e0
+          - img "React Web Dev Course" [ref=e386]
+        - link "Vue.js Course Online" [ref=e390] [cursor=pointer]:
+          - /url: "Updated Version: https://www.youtube.com/watch?v=VeNfHj6MhgA"
+          - img "Vue.js Course Online" [ref=e391]
+        - link "Angular Tutorial YouTube" [ref=e395] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=3dHNOWTI7H8
+          - img "Angular Tutorial YouTube" [ref=e396]
+      - generic [ref=e402]:
+        - link "Next.js Course Online" [ref=e406] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=mTz0GXj8NN0
+          - img "Next.js Course Online" [ref=e407]
+        - link "TypeScript Online Course" [ref=e411] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=BCg4U1FzODs
+          - img "TypeScript Online Course" [ref=e412]
+        - link "Svelte Web Development Course Online" [ref=e416] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=3TVy6GdtNuQ
+          - img "Svelte Web Development Course Online" [ref=e417]
+        - link "Node.js Crash Course Traversy Media" [ref=e421] [cursor=pointer]:
+          - /url: https://www.youtube.com/watch?v=32M1al-Y6Ag
+          - img "Node.js Crash Course Traversy Media" [ref=e422]
+  - contentinfo [ref=e424]:
+    - generic [ref=e426]:
+      - link "Footer Logo" [ref=e428] [cursor=pointer]:
+        - /url: /
+        - img "Footer Logo" [ref=e429]
+      - generic [ref=e430]: © 2026 Traversy Media. All Rights Reserved
+      - generic [ref=e433]:
+        - link "𝕏" [ref=e434] [cursor=pointer]:
+          - /url: https://twitter.com/traversymedia
+          - generic [ref=e435]: 𝕏
+        - link "" [ref=e436] [cursor=pointer]:
+          - /url: https://www.instagram.com/traversymedia/
+          - generic [ref=e437]: 
+        - link "" [ref=e438] [cursor=pointer]:
+          - /url: https://www.youtube.com/channel/UC29ju8bIPH5as8OGnQzwJyA
+          - generic [ref=e439]: 
+        - link "" [ref=e440] [cursor=pointer]:
+          - /url: https://github.com/bradtraversy
+          - generic [ref=e441]: 
+        - link "" [ref=e442] [cursor=pointer]:
+          - /url: https://www.linkedin.com/in/bradtraversy
+          - generic [ref=e443]: 
+  - alert:
+    - alert [ref=e444]:
+      - button "Close" [ref=e446] [cursor=pointer]: ×
+      - generic [ref=e447]:
+        - generic [ref=e448]:
+          - generic [ref=e449]: This website uses cookies
+          - generic [ref=e450]:
+            - text: This website uses cookies to improve user experience. By using our website you consent to all cookies in accordance with our Cookie Policy.
+            - link "Read more, opens a new window" [ref=e451] [cursor=pointer]:
+              - /url: /policy.html
+              - text: Read more
+          - generic [ref=e452]:
+            - generic [ref=e453]:
+              - generic [ref=e454] [cursor=pointer]:
+                - checkbox "Strictly necessary" [checked] [disabled]
+              - generic [ref=e456] [cursor=pointer]: Strictly necessary
+            - generic [ref=e457]:
+              - checkbox "Unclassified" [ref=e459] [cursor=pointer]
+              - generic [ref=e461] [cursor=pointer]: Unclassified
+          - button "Show details" [ref=e462]:
+            - generic [ref=e463] [cursor=pointer]: Show details
+        - generic [ref=e468]:
+          - button "Accept all" [ref=e469] [cursor=pointer]
+          - button "Decline all" [ref=e470] [cursor=pointer]

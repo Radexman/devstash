@@ -1,0 +1,1 @@
+- [DevStash Project Architecture](project_architecture.md) — core patterns, DB query issues, duplicate code hotspots found in April 2026 audit
