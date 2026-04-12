@@ -1,24 +1,16 @@
-# Current Feature: Profile Page
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create profile page at `/profile` route (protected)
-- Display user info: email, name, avatar (GitHub or initials), account creation date
-- Show usage stats: total items, total collections, breakdown by item type
-- Add change password action (email/password users only, not GitHub OAuth)
-- Add delete account with confirmation dialog
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- Avatar logic: Use GitHub avatar from OAuth if available, otherwise generate initials from name/email
-- Change password button should only appear for credentials users (not GitHub OAuth)
-- Delete account needs confirmation dialog to prevent accidental deletion
-- Item type breakdown should show counts for each type (snippets, prompts, notes, commands, links, files, images)
-- Follow existing codebase patterns for data fetching and components
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -37,3 +29,4 @@ In Progress
 - 2026-04-12: Email Verification — Resend integration, EmailVerificationToken model, verify/resend API routes, verify-email page, proxy blocks unverified users from dashboard, delete-users utility script
 - 2026-04-12: Email Verification Toggle — Added EMAIL_VERIFICATION_ENABLED env flag to enable/disable email verification, defaults to false for development without a Resend domain
 - 2026-04-12: Forgot Password — Forgot/reset password flow using existing VerificationToken model, Resend emails, forgot-password and reset-password pages, "Forgot password?" link on sign-in page
+- 2026-04-12: Profile Page — /profile route with user info (avatar, email, name, join date), usage stats (total items/collections, breakdown by item type), change password form (credentials users only), delete account with confirmation dialog, proxy updated to protect /profile
