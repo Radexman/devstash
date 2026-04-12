@@ -37,18 +37,29 @@ function VerifyEmailContent() {
 
   const [email, setEmail] = useState(emailParam ?? '');
   const [sent, setSent] = useState(false);
+  const [resendError, setResendError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleResend(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
 
+    setResendError('');
     setLoading(true);
-    await fetch('/api/auth/resend-verification', {
+
+    const res = await fetch('/api/auth/resend-verification', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
+
+    if (res.status === 429) {
+      const data = await res.json();
+      setResendError(data.error);
+      setLoading(false);
+      return;
+    }
+
     setSent(true);
     setLoading(false);
   }
@@ -74,6 +85,11 @@ function VerifyEmailContent() {
             </p>
           ) : (
             <form onSubmit={handleResend} className="space-y-4">
+              {resendError && (
+                <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {resendError}
+                </div>
+              )}
               <p className="text-sm text-muted-foreground">
                 Didn&apos;t receive the email? Enter your address to resend it.
               </p>

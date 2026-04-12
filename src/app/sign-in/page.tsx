@@ -39,6 +39,20 @@ function SignInForm() {
     setError('');
     setLoading(true);
 
+    // Check rate limit before attempting sign-in
+    const rateLimitCheck = await fetch('/api/auth/sign-in', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (rateLimitCheck.status === 429) {
+      const data = await rateLimitCheck.json();
+      setError(data.error);
+      setLoading(false);
+      return;
+    }
+
     const result = await signIn('credentials', {
       email,
       password,

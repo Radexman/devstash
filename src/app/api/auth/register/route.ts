@@ -5,9 +5,16 @@ import {
   generateVerificationToken,
   sendVerificationEmail,
 } from "@/lib/email";
+import { rateLimiters, rateLimitKey, checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    const limited = await checkRateLimit(
+      rateLimiters.register,
+      rateLimitKey(req)
+    );
+    if (limited) return limited;
+
     const { name, email, password, confirmPassword } = await req.json();
 
     if (!name || !email || !password || !confirmPassword) {
