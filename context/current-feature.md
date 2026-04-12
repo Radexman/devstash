@@ -26,3 +26,4 @@ None
 - 2026-04-11: Auth Phase 1 — NextAuth v5 with GitHub OAuth, split config pattern, Prisma adapter with JWT, /dashboard/* route protection via proxy, Session type extended with user.id
 - 2026-04-11: Auth Phase 2 — Credentials provider with bcrypt validation, POST /api/auth/register endpoint with input validation and duplicate checking
 - 2026-04-11: Auth Phase 3 — Custom sign-in/register pages, reusable UserAvatar component, sidebar user menu with sign-out dropdown, dashboard uses real auth session, toast on registration
+- 2026-04-12: Email Verification — Resend integration, EmailVerificationToken model, verify/resend API routes, verify-email page, proxy blocks unverified users from dashboard, delete-users utility script

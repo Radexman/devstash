@@ -12,6 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.emailVerified = user.emailVerified;
       }
       return token;
     },
@@ -19,6 +20,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token.id) {
         session.user.id = token.id as string;
       }
+      session.user.emailVerified = token.emailVerified as Date | null;
       return session;
     },
   },
@@ -44,7 +46,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const isValid = await compare(password, user.hashedPassword);
         if (!isValid) return null;
 
-        return { id: user.id, name: user.name, email: user.email };
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          emailVerified: user.emailVerified,
+        };
       },
     }),
   ],
