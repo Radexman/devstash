@@ -1,25 +1,16 @@
-# Current Feature: Rate Limiting for Auth
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add rate limiting to auth-related API routes using Upstash Redis + `@upstash/ratelimit`
-- Create reusable rate limiting utility at `src/lib/rate-limit.ts`
-- Protect login (5/15min), register (3/1hr), forgot-password (3/1hr), reset-password (5/15min), resend-verification (3/15min)
-- Return 429 responses with `Retry-After` header and user-friendly error messages
-- Display rate limit errors via toast on the frontend
-- Fail open if Upstash is unavailable
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- Uses sliding window algorithm via `@upstash/ratelimit`
-- Key by IP (from `x-forwarded-for`) combined with email where applicable
-- Upstash free tier: 10k requests/day (sufficient for auth limiting)
-- Login limiting with NextAuth credentials may need a custom sign-in handler
-- Env vars needed: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -39,3 +30,4 @@ In Progress
 - 2026-04-12: Email Verification Toggle — Added EMAIL_VERIFICATION_ENABLED env flag to enable/disable email verification, defaults to false for development without a Resend domain
 - 2026-04-12: Forgot Password — Forgot/reset password flow using existing VerificationToken model, Resend emails, forgot-password and reset-password pages, "Forgot password?" link on sign-in page
 - 2026-04-12: Profile Page — /profile route with user info (avatar, email, name, join date), usage stats (total items/collections, breakdown by item type), change password form (credentials users only), delete account with confirmation dialog, proxy updated to protect /profile
+- 2026-04-12: Rate Limiting — Upstash Redis rate limiting on all auth endpoints (login, register, forgot/reset password, resend verification), reusable rate-limit utility with fail-open, frontend 429 error handling
