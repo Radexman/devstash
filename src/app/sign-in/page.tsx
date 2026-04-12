@@ -28,6 +28,7 @@ function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verified = searchParams.get('verified') === 'true';
+  const reset = searchParams.get('reset') === 'true';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -70,6 +71,11 @@ function SignInForm() {
                 Email verified! You can now sign in.
               </div>
             )}
+            {reset && (
+              <div className="rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-500">
+                Password reset! You can now sign in with your new password.
+              </div>
+            )}
             {error && (
               <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
@@ -87,7 +93,15 @@ function SignInForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-xs text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"
