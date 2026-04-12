@@ -1,4 +1,7 @@
-import { auth } from "./auth";
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
+
+const { auth } = NextAuth(authConfig);
 
 const emailVerificationEnabled =
   process.env.EMAIL_VERIFICATION_ENABLED === "true";
@@ -25,3 +28,7 @@ export const proxy = auth((req) => {
     );
   }
 });
+
+export const config = {
+  matcher: ["/dashboard/:path*", "/profile/:path*"],
+};
