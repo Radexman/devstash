@@ -5,15 +5,17 @@ const emailVerificationEnabled =
 
 export const proxy = auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard");
+  const pathname = req.nextUrl.pathname;
+  const isProtected =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/profile");
 
-  if (isOnDashboard && !isLoggedIn) {
+  if (isProtected && !isLoggedIn) {
     return Response.redirect(new URL("/sign-in", req.nextUrl));
   }
 
   if (
     emailVerificationEnabled &&
-    isOnDashboard &&
+    isProtected &&
     isLoggedIn &&
     !req.auth?.user?.emailVerified
   ) {
