@@ -1,5 +1,8 @@
 import { auth } from "./auth";
 
+const emailVerificationEnabled =
+  process.env.EMAIL_VERIFICATION_ENABLED === "true";
+
 export const proxy = auth((req) => {
   const isLoggedIn = !!req.auth;
   const isOnDashboard = req.nextUrl.pathname.startsWith("/dashboard");
@@ -8,7 +11,12 @@ export const proxy = auth((req) => {
     return Response.redirect(new URL("/sign-in", req.nextUrl));
   }
 
-  if (isOnDashboard && isLoggedIn && !req.auth?.user?.emailVerified) {
+  if (
+    emailVerificationEnabled &&
+    isOnDashboard &&
+    isLoggedIn &&
+    !req.auth?.user?.emailVerified
+  ) {
     const email = req.auth?.user?.email ?? "";
     return Response.redirect(
       new URL(`/verify-email?email=${encodeURIComponent(email)}`, req.nextUrl)

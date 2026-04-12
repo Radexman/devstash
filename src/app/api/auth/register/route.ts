@@ -38,11 +38,13 @@ export async function POST(req: Request) {
       data: { name, email, hashedPassword },
     });
 
-    try {
-      const token = await generateVerificationToken(user.id);
-      await sendVerificationEmail(email, token);
-    } catch (emailError) {
-      console.error("Failed to send verification email:", emailError);
+    if (process.env.EMAIL_VERIFICATION_ENABLED === "true") {
+      try {
+        const token = await generateVerificationToken(user.id);
+        await sendVerificationEmail(email, token);
+      } catch (emailError) {
+        console.error("Failed to send verification email:", emailError);
+      }
     }
 
     return NextResponse.json(
