@@ -1,26 +1,16 @@
-# Current Feature: Item Drawer
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Right-side slide-in drawer (shadcn Sheet) that opens when an ItemCard is clicked
-- Drawer is the item detail view — no separate item page
-- Works on both dashboard and items list pages
-- Action bar with Favorite (star, yellow when active), Pin, Copy, Edit (pencil), Delete (trash, right-aligned)
-- Client wrapper component manages drawer state since pages are server components
-- Snappy UX — fetch on click, no page navigation; show skeleton while loading
-- Card data still fetched by server component; full item detail fetched on click
-- New `lib/db/items.ts` query for full item detail
-- New `/api/items/[id]` route that calls the query with auth check
-- Scope: drawer details display only — code editor and item-specific extras come later
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- Use shadcn Sheet, opens from the right
-- Reference: `context/screenshots/dashboard-ui-drawer.png`
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -45,3 +35,4 @@ In Progress
 - 2026-04-13: Items List View — Dynamic /items/[type] route with type-filtered Prisma query, reusable ItemCard with left border by type color, responsive 2-col grid on md+, shared dashboard shell layout, proxy protects /items/*
 - 2026-04-13: Vitest Setup — Vitest configured for node env with native tsconfig path resolution, scoped to src/{lib,actions}/**/*.test.ts, sample test for formatDate, test/test:watch/test:coverage scripts, workflow docs updated to require npm test
 - 2026-04-13: Items List 3-Column Grid — /items/[type] grid bumped to lg:grid-cols-3 while keeping 1-col mobile and 2-col md
+- 2026-04-13: Item Drawer — Right-side shadcn Sheet drawer with action bar (favorite/pin/copy/edit/delete), opens on ItemCard/PinnedItems/RecentItems click on dashboard and items list. New getItemDetail query, /api/items/[id] auth-checked route, ItemDrawerProvider client context, skeleton while fetching
