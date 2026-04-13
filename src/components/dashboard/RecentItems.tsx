@@ -25,6 +25,10 @@ export function RecentItems({ items }: RecentItemsProps) {
 						<div
 							key={item.id}
 							className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/50 cursor-pointer"
+							style={{
+								borderLeftWidth: '3px',
+								borderLeftColor: item.itemType.color,
+							}}
 						>
 							{Icon && (
 								<div
