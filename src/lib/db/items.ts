@@ -28,6 +28,23 @@ export async function getPinnedItems(userId: string): Promise<ItemWithType[]> {
   });
 }
 
+export async function getItemsByType(
+  userId: string,
+  typeName: string,
+): Promise<ItemWithType[]> {
+  return prisma.item.findMany({
+    where: {
+      userId,
+      itemType: { is: { name: { equals: typeName, mode: 'insensitive' } } },
+    },
+    orderBy: { updatedAt: 'desc' },
+    include: {
+      itemType: { select: { name: true, icon: true, color: true } },
+      tags: { select: { id: true, name: true } },
+    },
+  });
+}
+
 export async function getRecentItems(userId: string): Promise<ItemWithType[]> {
   return prisma.item.findMany({
     where: { userId },
