@@ -1,3 +1,5 @@
+'use client';
+
 import {
 	Pin,
 	Star,
@@ -5,6 +7,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
+import { useItemDrawer } from '@/components/items/ItemDrawerProvider';
 import type { ItemWithType } from '@/lib/db/items';
 
 interface PinnedItemsProps {
@@ -12,6 +15,8 @@ interface PinnedItemsProps {
 }
 
 export function PinnedItems({ items }: PinnedItemsProps) {
+	const { openItem } = useItemDrawer();
+
 	if (items.length === 0) return null;
 
 	return (
@@ -24,9 +29,11 @@ export function PinnedItems({ items }: PinnedItemsProps) {
 				{items.map((item) => {
 					const Icon = iconMap[item.itemType.icon];
 					return (
-						<div
+						<button
 							key={item.id}
-							className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/50 cursor-pointer"
+							type="button"
+							onClick={() => openItem(item.id)}
+							className="flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent/50"
 							style={{
 								borderLeftWidth: '3px',
 								borderLeftColor: item.itemType.color,
@@ -66,7 +73,7 @@ export function PinnedItems({ items }: PinnedItemsProps) {
 							<span className="shrink-0 text-xs text-muted-foreground">
 								{formatDate(item.createdAt)}
 							</span>
-						</div>
+						</button>
 					);
 				})}
 			</div>

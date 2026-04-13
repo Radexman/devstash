@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { TopBar } from '@/components/dashboard/TopBar';
 import { Sidebar } from '@/components/dashboard/Sidebar';
+import { ItemDrawerProvider } from '@/components/items/ItemDrawerProvider';
 import { getSystemItemTypes } from '@/lib/db/items';
 import { getSidebarCollections } from '@/lib/db/collections';
 
@@ -24,19 +25,21 @@ export default async function DashboardLayout({
 	]);
 
 	return (
-		<div className="flex min-h-screen flex-col">
-			<TopBar />
-			<div className="flex flex-1 overflow-hidden">
-				<Sidebar
-					itemTypes={itemTypes}
-					favoriteCollections={sidebarCollections.favorites}
-					recentCollections={sidebarCollections.recents}
-					user={session.user}
-				/>
-				<main className="flex-1 overflow-y-auto p-6">
-					{children}
-				</main>
+		<ItemDrawerProvider>
+			<div className="flex min-h-screen flex-col">
+				<TopBar />
+				<div className="flex flex-1 overflow-hidden">
+					<Sidebar
+						itemTypes={itemTypes}
+						favoriteCollections={sidebarCollections.favorites}
+						recentCollections={sidebarCollections.recents}
+						user={session.user}
+					/>
+					<main className="flex-1 overflow-y-auto p-6">
+						{children}
+					</main>
+				</div>
 			</div>
-		</div>
+		</ItemDrawerProvider>
 	);
 }

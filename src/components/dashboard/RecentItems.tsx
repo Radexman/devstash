@@ -1,3 +1,5 @@
+'use client';
+
 import {
 	Clock,
 	Star,
@@ -5,6 +7,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
+import { useItemDrawer } from '@/components/items/ItemDrawerProvider';
 import type { ItemWithType } from '@/lib/db/items';
 
 interface RecentItemsProps {
@@ -12,6 +15,7 @@ interface RecentItemsProps {
 }
 
 export function RecentItems({ items }: RecentItemsProps) {
+	const { openItem } = useItemDrawer();
 	return (
 		<section>
 			<div className="mb-4 flex items-center gap-2">
@@ -22,9 +26,11 @@ export function RecentItems({ items }: RecentItemsProps) {
 				{items.map((item) => {
 					const Icon = iconMap[item.itemType.icon];
 					return (
-						<div
+						<button
 							key={item.id}
-							className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:bg-accent/50 cursor-pointer"
+							type="button"
+							onClick={() => openItem(item.id)}
+							className="flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent/50"
 							style={{
 								borderLeftWidth: '3px',
 								borderLeftColor: item.itemType.color,
@@ -68,7 +74,7 @@ export function RecentItems({ items }: RecentItemsProps) {
 									{formatDate(item.updatedAt)}
 								</span>
 							</div>
-						</div>
+						</button>
 					);
 				})}
 			</div>

@@ -1,7 +1,10 @@
+'use client';
+
 import { Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
+import { useItemDrawer } from '@/components/items/ItemDrawerProvider';
 import type { ItemWithType } from '@/lib/db/items';
 
 interface ItemCardProps {
@@ -10,10 +13,13 @@ interface ItemCardProps {
 
 export function ItemCard({ item }: ItemCardProps) {
 	const Icon = iconMap[item.itemType.icon];
+	const { openItem } = useItemDrawer();
 
 	return (
-		<div
-			className="flex items-start gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-accent/50 cursor-pointer"
+		<button
+			type="button"
+			onClick={() => openItem(item.id)}
+			className="flex w-full items-start gap-3 rounded-lg border border-border bg-card p-4 text-left transition-colors hover:bg-accent/50"
 			style={{
 				borderLeftWidth: '3px',
 				borderLeftColor: item.itemType.color,
@@ -64,6 +70,6 @@ export function ItemCard({ item }: ItemCardProps) {
 					</span>
 				</div>
 			</div>
-		</div>
+		</button>
 	);
 }
