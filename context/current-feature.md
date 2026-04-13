@@ -1,20 +1,16 @@
-# Current Feature: Items List 3-Column Grid
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Update the items list view at `/items/[type]` to render a 3-column grid on large screens
-- Stay fully responsive: 1 column on mobile, 2 on medium, 3 on large (`lg:`)
-- Preserve existing ItemCard styling and the colored left border
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- Affects [src/app/items/[type]/page.tsx](src/app/items/[type]/page.tsx)
-- Currently uses a 2-column grid on `md+` — change to `md:grid-cols-2 lg:grid-cols-3`
-- Small, single-file change
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -38,3 +34,4 @@ In Progress
 - 2026-04-12: Fix GitHub OAuth Redirect — Switched GitHub sign-in from client-side signIn to server action with redirectTo, fixing the double-click redirect issue
 - 2026-04-13: Items List View — Dynamic /items/[type] route with type-filtered Prisma query, reusable ItemCard with left border by type color, responsive 2-col grid on md+, shared dashboard shell layout, proxy protects /items/*
 - 2026-04-13: Vitest Setup — Vitest configured for node env with native tsconfig path resolution, scoped to src/{lib,actions}/**/*.test.ts, sample test for formatDate, test/test:watch/test:coverage scripts, workflow docs updated to require npm test
+- 2026-04-13: Items List 3-Column Grid — /items/[type] grid bumped to lg:grid-cols-3 while keeping 1-col mobile and 2-col md
