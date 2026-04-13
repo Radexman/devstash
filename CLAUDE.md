@@ -19,3 +19,6 @@ Read the following to get the full context of the project:
 - `npm run build` — production build
 - `npm run start` — serve production build
 - `npm run lint` — run ESLint (flat config, v9)
+- `npm test` — run Vitest unit tests (server actions + utilities)
+- `npm run test:watch` — Vitest watch mode
+- `npm run test:coverage` — Vitest with v8 coverage

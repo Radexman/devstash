@@ -89,6 +89,14 @@ Example v4 configuration:
 - Return `{ success, data, error }` pattern from actions
 - Display user-friendly error messages via toast
 
+## Testing
+
+- **Vitest** for unit tests (node environment)
+- **Scope**: server actions (`src/actions/`) and utilities (`src/lib/`) only — no component tests
+- Colocate tests next to source as `*.test.ts` (e.g. `src/lib/format.ts` → `src/lib/format.test.ts`)
+- Run with `npm test` (one-shot), `npm run test:watch` (watch mode), `npm run test:coverage`
+- Mock external dependencies (Prisma, Resend, Redis) — don't hit real services in unit tests
+
 ## Code Quality
 
 - No commented-out code unless specified
