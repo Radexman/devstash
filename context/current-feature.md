@@ -1,29 +1,16 @@
-# Current Feature: Item Drawer — Edit Mode
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Toggle item drawer into inline edit mode via the pencil button; replace action bar with Save/Cancel
-- Cancel discards; Save persists via server action, returns to view mode, refreshes drawer data, shows toast
-- Editable fields: title (required), description, tags (comma-separated → array)
-- Type-specific editable fields: content (snippet/prompt/command/note), language (snippet/command), url (link)
-- Display-only in edit mode: item type, collections, created/updated dates
-- Add `updateItem(itemId, data)` server action in `src/actions/items.ts` with Zod validation, auth, ownership check, `{ success, data, error }` shape
-- Add `updateItem` query in `lib/db/items.ts`; tag update disconnects existing then connect-or-creates; returns updated `ItemDetail`
-- Disable Save when title empty; call `router.refresh()` after save so card lists reflect changes
-- Unit tests for the new server action / query per workflow
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- No form library — controlled inputs with local state
-- Zod is source of truth on the server; surface errors in `{ success: false, error }`
-- Content textarea is plain — no code editor yet
-- URL field validated as a URL string (optional/null allowed)
-- Tags: trim, drop empties, array of non-empty strings
-- Spec: @context/features/item-drawer-edit-spec.md
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -49,3 +36,4 @@ In Progress
 - 2026-04-13: Vitest Setup — Vitest configured for node env with native tsconfig path resolution, scoped to src/{lib,actions}/**/*.test.ts, sample test for formatDate, test/test:watch/test:coverage scripts, workflow docs updated to require npm test
 - 2026-04-13: Items List 3-Column Grid — /items/[type] grid bumped to lg:grid-cols-3 while keeping 1-col mobile and 2-col md
 - 2026-04-13: Item Drawer — Right-side shadcn Sheet drawer with action bar (favorite/pin/copy/edit/delete), opens on ItemCard/PinnedItems/RecentItems click on dashboard and items list. New getItemDetail query, /api/items/[id] auth-checked route, ItemDrawerProvider client context, skeleton while fetching
+- 2026-04-15: Item Drawer Edit Mode — Inline edit toggle in drawer with Save/Cancel bar, controlled form (title/description/tags + type-specific content/language/url), new updateItem server action with Zod validation and ownership check, updateItem query with tag disconnect+connectOrCreate, shadcn Textarea component, zod dep, router.refresh() on save, Vitest coverage for the action
