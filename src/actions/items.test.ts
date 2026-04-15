@@ -6,14 +6,20 @@ vi.mock('@/auth', () => ({
 
 vi.mock('@/lib/db/items', () => ({
   updateItem: vi.fn(),
+  deleteItem: vi.fn(),
 }));
 
 import { auth } from '@/auth';
-import { updateItem as updateItemQuery, type ItemDetail } from '@/lib/db/items';
-import { updateItem } from './items';
+import {
+  updateItem as updateItemQuery,
+  deleteItem as deleteItemQuery,
+  type ItemDetail,
+} from '@/lib/db/items';
+import { updateItem, deleteItem } from './items';
 
 const mockAuth = vi.mocked(auth);
 const mockUpdate = vi.mocked(updateItemQuery);
+const mockDelete = vi.mocked(deleteItemQuery);
 
 const fakeDetail: ItemDetail = {
   id: 'i1',
@@ -120,5 +126,34 @@ describe('updateItem action', () => {
       tags: [],
     });
     expect(res).toEqual({ success: true, data: fakeDetail });
+  });
+});
+
+describe('deleteItem action', () => {
+  it('rejects unauthorized', async () => {
+    // @ts-expect-error null session
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await deleteItem('i1');
+    expect(res).toEqual({ success: false, error: 'Unauthorized' });
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it('returns not found when the row does not belong to user', async () => {
+    mockDelete.mockResolvedValueOnce(false);
+    const res = await deleteItem('missing');
+    expect(mockDelete).toHaveBeenCalledWith('missing', 'u1');
+    expect(res).toEqual({ success: false, error: 'Item not found' });
+  });
+
+  it('returns success when delete succeeds', async () => {
+    mockDelete.mockResolvedValueOnce(true);
+    const res = await deleteItem('i1');
+    expect(res).toEqual({ success: true, data: { id: 'i1' } });
+  });
+
+  it('returns error when the query throws', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('db down'));
+    const res = await deleteItem('i1');
+    expect(res).toEqual({ success: false, error: 'Failed to delete item' });
   });
 });

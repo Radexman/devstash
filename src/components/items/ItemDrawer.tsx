@@ -11,6 +11,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from '@/components/ui/sheet';
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -19,7 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
-import { updateItem } from '@/actions/items';
+import { deleteItem, updateItem } from '@/actions/items';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -59,6 +67,8 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 	const [isEditing, setIsEditing] = useState(false);
 	const [form, setForm] = useState<EditForm | null>(null);
 	const [saving, setSaving] = useState(false);
+	const [deleteOpen, setDeleteOpen] = useState(false);
+	const [deleting, setDeleting] = useState(false);
 
 	useEffect(() => {
 		if (!itemId) {
@@ -143,6 +153,21 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 		router.refresh();
 	};
 
+	const handleDelete = async () => {
+		if (!item) return;
+		setDeleting(true);
+		const result = await deleteItem(item.id);
+		setDeleting(false);
+		if (!result.success) {
+			toast.error(result.error);
+			return;
+		}
+		setDeleteOpen(false);
+		onOpenChange(false);
+		toast.success('Item deleted');
+		router.refresh();
+	};
+
 	const handleCopy = async () => {
 		if (!item) return;
 		const text = item.content ?? item.url ?? '';
@@ -161,6 +186,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 	const Icon = item ? iconMap[item.itemType.icon] : null;
 
 	return (
+		<>
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
 				{loading && !item && <DrawerSkeleton />}
@@ -257,7 +283,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 										variant="ghost"
 										size="icon-sm"
 										aria-label="Delete"
-										disabled
+										onClick={() => setDeleteOpen(true)}
 									>
 										<Trash2 className="h-4 w-4 text-destructive" />
 									</Button>
@@ -373,6 +399,34 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 				)}
 			</SheetContent>
 		</Sheet>
+		<Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Delete item?</DialogTitle>
+					<DialogDescription>
+						This action cannot be undone. This item will be permanently
+						removed from your stash.
+					</DialogDescription>
+				</DialogHeader>
+				<DialogFooter>
+					<Button
+						variant="ghost"
+						onClick={() => setDeleteOpen(false)}
+						disabled={deleting}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="destructive"
+						onClick={handleDelete}
+						disabled={deleting}
+					>
+						{deleting ? 'Deleting…' : 'Delete'}
+					</Button>
+				</DialogFooter>
+			</DialogContent>
+		</Dialog>
+		</>
 	);
 }
 
