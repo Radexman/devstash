@@ -117,6 +117,47 @@ export async function getItemDetail(
   };
 }
 
+export interface UpdateItemInput {
+  title: string;
+  description: string | null;
+  content: string | null;
+  url: string | null;
+  language: string | null;
+  tags: string[];
+}
+
+export async function updateItem(
+  itemId: string,
+  userId: string,
+  data: UpdateItemInput,
+): Promise<ItemDetail | null> {
+  const existing = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { id: true },
+  });
+  if (!existing) return null;
+
+  await prisma.item.update({
+    where: { id: itemId },
+    data: {
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      url: data.url,
+      language: data.language,
+      tags: {
+        set: [],
+        connectOrCreate: data.tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+  });
+
+  return getItemDetail(itemId, userId);
+}
+
 export interface DashboardStats {
   totalItems: number;
   totalCollections: number;
