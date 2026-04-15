@@ -7,19 +7,22 @@ vi.mock('@/auth', () => ({
 vi.mock('@/lib/db/items', () => ({
   updateItem: vi.fn(),
   deleteItem: vi.fn(),
+  createItem: vi.fn(),
 }));
 
 import { auth } from '@/auth';
 import {
   updateItem as updateItemQuery,
   deleteItem as deleteItemQuery,
+  createItem as createItemQuery,
   type ItemDetail,
 } from '@/lib/db/items';
-import { updateItem, deleteItem } from './items';
+import { updateItem, deleteItem, createItem } from './items';
 
 const mockAuth = vi.mocked(auth);
 const mockUpdate = vi.mocked(updateItemQuery);
 const mockDelete = vi.mocked(deleteItemQuery);
+const mockCreate = vi.mocked(createItemQuery);
 
 const fakeDetail: ItemDetail = {
   id: 'i1',
@@ -155,5 +158,76 @@ describe('deleteItem action', () => {
     mockDelete.mockRejectedValueOnce(new Error('db down'));
     const res = await deleteItem('i1');
     expect(res).toEqual({ success: false, error: 'Failed to delete item' });
+  });
+});
+
+describe('createItem action', () => {
+  it('rejects unauthorized', async () => {
+    // @ts-expect-error null session
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await createItem({
+      type: 'snippet',
+      title: 'x',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res).toEqual({ success: false, error: 'Unauthorized' });
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects empty title', async () => {
+    const res = await createItem({
+      type: 'snippet',
+      title: '   ',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res.success).toBe(false);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects link without url', async () => {
+    const res = await createItem({
+      type: 'link',
+      title: 'My link',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res.success).toBe(false);
+    expect(mockCreate).not.toHaveBeenCalled();
+  });
+
+  it('creates snippet and strips link/url fields', async () => {
+    mockCreate.mockResolvedValueOnce(fakeDetail);
+    const res = await createItem({
+      type: 'snippet',
+      title: 'Hello',
+      description: null,
+      content: 'console.log(1)',
+      url: null,
+      language: 'ts',
+      tags: [' foo ', '', 'bar'],
+    });
+    expect(mockCreate).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({
+        typeName: 'snippet',
+        title: 'Hello',
+        content: 'console.log(1)',
+        language: 'ts',
+        url: null,
+        tags: ['foo', 'bar'],
+      }),
+    );
+    expect(res).toEqual({ success: true, data: fakeDetail });
   });
 });
