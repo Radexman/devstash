@@ -1,0 +1,124 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/auth', () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock('@/lib/db/items', () => ({
+  updateItem: vi.fn(),
+}));
+
+import { auth } from '@/auth';
+import { updateItem as updateItemQuery, type ItemDetail } from '@/lib/db/items';
+import { updateItem } from './items';
+
+const mockAuth = vi.mocked(auth);
+const mockUpdate = vi.mocked(updateItemQuery);
+
+const fakeDetail: ItemDetail = {
+  id: 'i1',
+  title: 'New',
+  description: null,
+  contentType: 'text',
+  content: null,
+  url: null,
+  fileUrl: null,
+  fileName: null,
+  fileSize: null,
+  language: null,
+  isFavorite: false,
+  isPinned: false,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-02'),
+  itemType: { id: 't1', name: 'Snippet', icon: 'Code', color: '#000' },
+  tags: [],
+  collections: [],
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // @ts-expect-error partial session
+  mockAuth.mockResolvedValue({ user: { id: 'u1' } });
+});
+
+describe('updateItem action', () => {
+  it('rejects unauthorized', async () => {
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await updateItem('i1', {
+      title: 'x',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res).toEqual({ success: false, error: 'Unauthorized' });
+  });
+
+  it('rejects empty title', async () => {
+    const res = await updateItem('i1', {
+      title: '   ',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res.success).toBe(false);
+  });
+
+  it('rejects invalid URL', async () => {
+    const res = await updateItem('i1', {
+      title: 'ok',
+      description: null,
+      content: null,
+      url: 'not-a-url',
+      language: null,
+      tags: [],
+    });
+    expect(res.success).toBe(false);
+  });
+
+  it('trims tags and drops empties', async () => {
+    mockUpdate.mockResolvedValueOnce(fakeDetail);
+    await updateItem('i1', {
+      title: 'ok',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: ['  foo ', '', 'bar'],
+    });
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'i1',
+      'u1',
+      expect.objectContaining({ tags: ['foo', 'bar'] }),
+    );
+  });
+
+  it('returns not found when query returns null', async () => {
+    mockUpdate.mockResolvedValueOnce(null);
+    const res = await updateItem('missing', {
+      title: 'ok',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res).toEqual({ success: false, error: 'Item not found' });
+  });
+
+  it('returns updated detail on success', async () => {
+    mockUpdate.mockResolvedValueOnce(fakeDetail);
+    const res = await updateItem('i1', {
+      title: 'New',
+      description: '',
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(res).toEqual({ success: true, data: fakeDetail });
+  });
+});

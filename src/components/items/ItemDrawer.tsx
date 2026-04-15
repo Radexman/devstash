@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Copy, Pencil, Pin, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -13,9 +14,36 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
+import { updateItem } from '@/actions/items';
 import type { ItemDetail } from '@/lib/db/items';
+
+const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
+const LANGUAGE_TYPES = new Set(['snippet', 'command']);
+
+interface EditForm {
+	title: string;
+	description: string;
+	content: string;
+	url: string;
+	language: string;
+	tags: string;
+}
+
+function toEditForm(item: ItemDetail): EditForm {
+	return {
+		title: item.title,
+		description: item.description ?? '',
+		content: item.content ?? '',
+		url: item.url ?? '',
+		language: item.language ?? '',
+		tags: item.tags.map((t) => t.name).join(', '),
+	};
+}
 
 interface ItemDrawerProps {
 	itemId: string | null;
@@ -24,14 +52,20 @@ interface ItemDrawerProps {
 }
 
 export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
+	const router = useRouter();
 	const [item, setItem] = useState<ItemDetail | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [isEditing, setIsEditing] = useState(false);
+	const [form, setForm] = useState<EditForm | null>(null);
+	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
 		if (!itemId) {
 			setItem(null);
 			setError(null);
+			setIsEditing(false);
+			setForm(null);
 			return;
 		}
 
@@ -62,6 +96,52 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 			cancelled = true;
 		};
 	}, [itemId]);
+
+	const handleStartEdit = () => {
+		if (!item) return;
+		setForm(toEditForm(item));
+		setIsEditing(true);
+	};
+
+	const handleCancelEdit = () => {
+		setIsEditing(false);
+		setForm(null);
+	};
+
+	const handleSave = async () => {
+		if (!item || !form) return;
+		const typeName = item.itemType.name.toLowerCase();
+		const supportsContent = TEXT_TYPES.has(typeName);
+		const supportsLanguage = LANGUAGE_TYPES.has(typeName);
+		const supportsUrl = typeName === 'link';
+
+		setSaving(true);
+		const result = await updateItem(item.id, {
+			title: form.title,
+			description: form.description,
+			content: supportsContent ? form.content : null,
+			url: supportsUrl ? form.url : null,
+			language: supportsLanguage ? form.language : null,
+			tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+		});
+		setSaving(false);
+
+		if (!result.success) {
+			toast.error(result.error);
+			return;
+		}
+
+		const updated = result.data;
+		setItem({
+			...updated,
+			createdAt: new Date(updated.createdAt),
+			updatedAt: new Date(updated.updatedAt),
+		});
+		setIsEditing(false);
+		setForm(null);
+		toast.success('Item updated');
+		router.refresh();
+	};
 
 	const handleCopy = async () => {
 		if (!item) return;
@@ -115,53 +195,85 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 							</div>
 						</SheetHeader>
 
-						<div className="flex items-center gap-1 px-4">
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								aria-label="Toggle favorite"
-								disabled
-							>
-								<Star
-									className={
-										item.isFavorite
-											? 'h-4 w-4 fill-yellow-500 text-yellow-500'
-											: 'h-4 w-4'
-									}
-								/>
-							</Button>
-							<Button variant="ghost" size="icon-sm" aria-label="Toggle pin" disabled>
-								<Pin
-									className={
-										item.isPinned ? 'h-4 w-4 fill-current' : 'h-4 w-4'
-									}
-								/>
-							</Button>
-							<Button
-								variant="ghost"
-								size="icon-sm"
-								aria-label="Copy"
-								onClick={handleCopy}
-							>
-								<Copy className="h-4 w-4" />
-							</Button>
-							<Button variant="ghost" size="icon-sm" aria-label="Edit" disabled>
-								<Pencil className="h-4 w-4" />
-							</Button>
-							<div className="ml-auto">
+						{isEditing && form ? (
+							<div className="flex items-center justify-end gap-2 px-4">
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={handleCancelEdit}
+									disabled={saving}
+								>
+									Cancel
+								</Button>
+								<Button
+									size="sm"
+									onClick={handleSave}
+									disabled={saving || form.title.trim().length === 0}
+								>
+									{saving ? 'Saving…' : 'Save'}
+								</Button>
+							</div>
+						) : (
+							<div className="flex items-center gap-1 px-4">
 								<Button
 									variant="ghost"
 									size="icon-sm"
-									aria-label="Delete"
+									aria-label="Toggle favorite"
 									disabled
 								>
-									<Trash2 className="h-4 w-4 text-destructive" />
+									<Star
+										className={
+											item.isFavorite
+												? 'h-4 w-4 fill-yellow-500 text-yellow-500'
+												: 'h-4 w-4'
+										}
+									/>
 								</Button>
+								<Button variant="ghost" size="icon-sm" aria-label="Toggle pin" disabled>
+									<Pin
+										className={
+											item.isPinned ? 'h-4 w-4 fill-current' : 'h-4 w-4'
+										}
+									/>
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									aria-label="Copy"
+									onClick={handleCopy}
+								>
+									<Copy className="h-4 w-4" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									aria-label="Edit"
+									onClick={handleStartEdit}
+								>
+									<Pencil className="h-4 w-4" />
+								</Button>
+								<div className="ml-auto">
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										aria-label="Delete"
+										disabled
+									>
+										<Trash2 className="h-4 w-4 text-destructive" />
+									</Button>
+								</div>
 							</div>
-						</div>
+						)}
 
 						<Separator />
 
+						{isEditing && form ? (
+							<EditFormFields
+								item={item}
+								form={form}
+								onChange={setForm}
+							/>
+						) : (
 						<div className="space-y-5 px-4 pb-6">
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge
@@ -256,10 +368,129 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 								<p>Updated {formatDate(item.updatedAt)}</p>
 							</div>
 						</div>
+						)}
 					</>
 				)}
 			</SheetContent>
 		</Sheet>
+	);
+}
+
+interface EditFormFieldsProps {
+	item: ItemDetail;
+	form: EditForm;
+	onChange: (form: EditForm) => void;
+}
+
+function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
+	const typeName = item.itemType.name.toLowerCase();
+	const showContent = TEXT_TYPES.has(typeName);
+	const showLanguage = LANGUAGE_TYPES.has(typeName);
+	const showUrl = typeName === 'link';
+	const set = <K extends keyof EditForm>(key: K, value: EditForm[K]) =>
+		onChange({ ...form, [key]: value });
+
+	return (
+		<div className="space-y-4 px-4 pb-6">
+			<div className="flex flex-wrap items-center gap-2">
+				<Badge
+					variant="outline"
+					style={{
+						borderColor: item.itemType.color,
+						color: item.itemType.color,
+					}}
+				>
+					{item.itemType.name}
+				</Badge>
+			</div>
+
+			<div className="space-y-1.5">
+				<Label htmlFor="item-title">Title</Label>
+				<Input
+					id="item-title"
+					value={form.title}
+					onChange={(e) => set('title', e.target.value)}
+					required
+				/>
+			</div>
+
+			<div className="space-y-1.5">
+				<Label htmlFor="item-description">Description</Label>
+				<Textarea
+					id="item-description"
+					value={form.description}
+					onChange={(e) => set('description', e.target.value)}
+					rows={2}
+				/>
+			</div>
+
+			{showContent && (
+				<div className="space-y-1.5">
+					<Label htmlFor="item-content">Content</Label>
+					<Textarea
+						id="item-content"
+						value={form.content}
+						onChange={(e) => set('content', e.target.value)}
+						rows={8}
+						className="font-mono text-xs"
+					/>
+				</div>
+			)}
+
+			{showLanguage && (
+				<div className="space-y-1.5">
+					<Label htmlFor="item-language">Language</Label>
+					<Input
+						id="item-language"
+						value={form.language}
+						onChange={(e) => set('language', e.target.value)}
+					/>
+				</div>
+			)}
+
+			{showUrl && (
+				<div className="space-y-1.5">
+					<Label htmlFor="item-url">URL</Label>
+					<Input
+						id="item-url"
+						value={form.url}
+						onChange={(e) => set('url', e.target.value)}
+					/>
+				</div>
+			)}
+
+			<div className="space-y-1.5">
+				<Label htmlFor="item-tags">Tags</Label>
+				<Input
+					id="item-tags"
+					value={form.tags}
+					onChange={(e) => set('tags', e.target.value)}
+					placeholder="comma, separated, tags"
+				/>
+			</div>
+
+			{item.collections.length > 0 && (
+				<div>
+					<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
+						Collections
+					</h3>
+					<div className="flex flex-wrap gap-1">
+						{item.collections.map((c) => (
+							<Badge key={c.id} variant="outline">
+								{c.name}
+							</Badge>
+						))}
+					</div>
+				</div>
+			)}
+
+			<Separator />
+
+			<div className="space-y-1 text-xs text-muted-foreground">
+				<p>Created {formatDate(item.createdAt)}</p>
+				<p>Updated {formatDate(item.updatedAt)}</p>
+			</div>
+		</div>
 	);
 }
 
