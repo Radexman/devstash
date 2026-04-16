@@ -29,6 +29,7 @@ import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
 import { deleteItem, updateItem } from '@/actions/items';
 import { CodeEditor } from '@/components/items/CodeEditor';
+import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -390,9 +391,10 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 											readOnly
 										/>
 									) : (
-										<pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted/50 p-3 text-xs">
-											<code>{item.content}</code>
-										</pre>
+										<MarkdownEditor
+											value={item.content}
+											readOnly
+										/>
 									)}
 								</div>
 							)}
@@ -498,12 +500,9 @@ function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
 							onChange={(v) => set('content', v)}
 						/>
 					) : (
-						<Textarea
-							id="item-content"
+						<MarkdownEditor
 							value={form.content}
-							onChange={(e) => set('content', e.target.value)}
-							rows={8}
-							className="font-mono text-xs"
+							onChange={(v) => set('content', v)}
 						/>
 					)}
 				</div>
