@@ -1,24 +1,16 @@
-# Current Feature: Code Editor
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create CodeEditor component using Monaco Editor with dark theme
-- Replace Textarea with CodeEditor for snippets and commands only
-- Keep Textarea for notes, prompts, and other non-code types
-- Add macOS-style window dots (red/yellow/green) at top of editor
-- Add quick copy button in editor header
-- Add the language in editor header next to copy
-- Support both display (readonly) and edit modes
-- Make the height of the editor fluid but a max height of 400px and add a nice looking scrollbar that matches the theme
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- Monaco Editor is the same editor used in VS Code
-- Only snippet and command types should use the code editor; all other types keep the existing Textarea
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -47,3 +39,4 @@ In Progress
 - 2026-04-15: Item Drawer Edit Mode — Inline edit toggle in drawer with Save/Cancel bar, controlled form (title/description/tags + type-specific content/language/url), new updateItem server action with Zod validation and ownership check, updateItem query with tag disconnect+connectOrCreate, shadcn Textarea component, zod dep, router.refresh() on save, Vitest coverage for the action
 - 2026-04-15: Item Delete — New deleteItem server action (auth + ownership via deleteMany) and deleteItem query, drawer delete button now opens a shadcn Dialog confirmation, success/error toast, drawer closes and router.refresh() on success, Vitest coverage for unauthorized/not-found/success/throw
 - 2026-04-15: Item Create — New createItem query (resolves system ItemType by name, connectOrCreate tags, sets contentType text/url) and createItem server action with Zod validation (enum type, title required, link requires URL via superRefine), new NewItemDialog client component wired into TopBar with type selector and dynamic content/language/url fields, toast + close + form reset + router.refresh() on success, Vitest coverage for unauthorized/empty title/link without url/success
+- 2026-04-16: Code Editor — Monaco Editor component (CodeEditor.tsx) with macOS window dots, copy button, language label, vs-dark theme, fluid height (max 400px). Replaces <pre><code> display and Textarea editing for snippet/command types in ItemDrawer and NewItemDialog. Notes/prompts keep Textarea.
