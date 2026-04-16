@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { CodeEditor } from '@/components/items/CodeEditor';
 import { createItem } from '@/actions/items';
 
 const TYPES = [
@@ -149,13 +150,21 @@ export function NewItemDialog() {
           {showContent && (
             <div className="space-y-1.5">
               <Label htmlFor="new-item-content">Content</Label>
-              <Textarea
-                id="new-item-content"
-                value={form.content}
-                onChange={(e) => set('content', e.target.value)}
-                rows={6}
-                className="font-mono text-xs"
-              />
+              {showLanguage ? (
+                <CodeEditor
+                  value={form.content}
+                  language={form.language || 'plaintext'}
+                  onChange={(v) => set('content', v)}
+                />
+              ) : (
+                <Textarea
+                  id="new-item-content"
+                  value={form.content}
+                  onChange={(e) => set('content', e.target.value)}
+                  rows={6}
+                  className="font-mono text-xs"
+                />
+              )}
             </div>
           )}
 

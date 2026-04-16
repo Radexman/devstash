@@ -28,6 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
 import { deleteItem, updateItem } from '@/actions/items';
+import { CodeEditor } from '@/components/items/CodeEditor';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -184,6 +185,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 	};
 
 	const Icon = item ? iconMap[item.itemType.icon] : null;
+	const typeName = item ? item.itemType.name.toLowerCase() : '';
 
 	return (
 		<>
@@ -381,9 +383,17 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
 										Content
 									</h3>
-									<pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted/50 p-3 text-xs">
-										<code>{item.content}</code>
-									</pre>
+									{LANGUAGE_TYPES.has(typeName) ? (
+										<CodeEditor
+											value={item.content}
+											language={item.language ?? 'plaintext'}
+											readOnly
+										/>
+									) : (
+										<pre className="max-h-96 overflow-auto rounded-md border border-border bg-muted/50 p-3 text-xs">
+											<code>{item.content}</code>
+										</pre>
+									)}
 								</div>
 							)}
 
@@ -481,13 +491,21 @@ function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
 			{showContent && (
 				<div className="space-y-1.5">
 					<Label htmlFor="item-content">Content</Label>
-					<Textarea
-						id="item-content"
-						value={form.content}
-						onChange={(e) => set('content', e.target.value)}
-						rows={8}
-						className="font-mono text-xs"
-					/>
+					{showLanguage ? (
+						<CodeEditor
+							value={form.content}
+							language={form.language || 'plaintext'}
+							onChange={(v) => set('content', v)}
+						/>
+					) : (
+						<Textarea
+							id="item-content"
+							value={form.content}
+							onChange={(e) => set('content', e.target.value)}
+							rows={8}
+							className="font-mono text-xs"
+						/>
+					)}
 				</div>
 			)}
 
