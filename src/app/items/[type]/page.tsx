@@ -11,8 +11,6 @@ const TYPE_LABELS: Record<string, string> = {
 	command: 'Commands',
 	note: 'Notes',
 	link: 'Links',
-	file: 'Files',
-	image: 'Images',
 };
 
 export default async function ItemsByTypePage({

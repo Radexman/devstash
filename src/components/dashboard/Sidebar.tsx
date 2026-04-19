@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -31,8 +30,6 @@ import { UserAvatar } from '@/components/shared/UserAvatar';
 import { iconMap } from '@/lib/item-icons';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
-
-const PRO_TYPES = new Set(['file', 'image']);
 
 interface UserInfo {
 	name?: string | null;
@@ -84,7 +81,6 @@ function SidebarContent({
 									</TooltipTrigger>
 									<TooltipContent side="right">
 										{type.name} ({type.count})
-										{PRO_TYPES.has(type.name) && ' · PRO'}
 									</TooltipContent>
 								</Tooltip>
 							) : (
@@ -95,11 +91,6 @@ function SidebarContent({
 								>
 									{Icon && <Icon className="h-4 w-4 shrink-0" style={{ color: type.color }} />}
 									<span className="flex-1">{type.name}</span>
-									{PRO_TYPES.has(type.name) && (
-										<Badge variant="secondary" className="h-4 px-1.5 text-[10px] font-semibold tracking-wide">
-											PRO
-										</Badge>
-									)}
 									<span className="text-xs text-muted-foreground/60">{type.count}</span>
 								</Link>
 							);

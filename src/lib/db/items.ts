@@ -64,9 +64,6 @@ export interface ItemDetail {
   contentType: string;
   content: string | null;
   url: string | null;
-  fileUrl: string | null;
-  fileName: string | null;
-  fileSize: number | null;
   language: string | null;
   isFavorite: boolean;
   isPinned: boolean;
@@ -103,9 +100,6 @@ export async function getItemDetail(
     contentType: item.contentType,
     content: item.content,
     url: item.url,
-    fileUrl: item.fileUrl,
-    fileName: item.fileName,
-    fileSize: item.fileSize,
     language: item.language,
     isFavorite: item.isFavorite,
     isPinned: item.isPinned,
@@ -239,7 +233,7 @@ export interface SidebarItemType {
   count: number;
 }
 
-const SYSTEM_TYPE_ORDER = ['Snippets', 'Prompts', 'Commands', 'Notes', 'Files', 'Images', 'Links'];
+const SYSTEM_TYPE_ORDER = ['Snippets', 'Prompts', 'Commands', 'Notes', 'Links'];
 
 export async function getSystemItemTypes(): Promise<SidebarItemType[]> {
   const types = await prisma.itemType.findMany({

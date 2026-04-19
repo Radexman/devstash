@@ -2,15 +2,24 @@
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
-<!-- Goals will be populated when a feature is loaded -->
+Remove the File and Image item types from the project entirely.
+
+- Drop `fileUrl`, `fileName`, `fileSize` from the `Item` model and remove the `"file"` contentType branch
+- Remove `file` and `image` entries from the seed, `iconMap`, item-list type labels, and sidebar PRO gating
+- Remove the file-specific viewer block from `ItemDrawer`
+- Update docs (`context/project-overview.md`, `docs/item-types.md`, `docs/item-crud-architecture.md`) to reflect a 5-type system (snippet, prompt, command, note, link)
+- Run a Prisma migration to drop the removed columns
 
 ## Notes
 
-<!-- Notes will be populated when a feature is loaded -->
+- No existing file/image data exists in dev — dropping columns is safe
+- Cloudflare R2 / file-upload tooling is not wired up in the repo, so nothing to uninstall
+- NewItemDialog and the items server action already only allow snippet/prompt/command/note/link, so no change needed there
+- `User.image` is NextAuth's avatar URL — keep it
 
 ## History
 

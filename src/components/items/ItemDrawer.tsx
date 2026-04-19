@@ -365,20 +365,6 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 								</div>
 							)}
 
-							{item.fileName && (
-								<div>
-									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-										File
-									</h3>
-									<p className="text-sm">{item.fileName}</p>
-									{item.fileSize !== null && (
-										<p className="text-xs text-muted-foreground">
-											{formatBytes(item.fileSize)}
-										</p>
-									)}
-								</div>
-							)}
-
 							{item.content && (
 								<div>
 									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
@@ -581,8 +567,3 @@ function DrawerSkeleton() {
 	);
 }
 
-function formatBytes(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
