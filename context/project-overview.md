@@ -37,17 +37,15 @@ The result: constant context switching, lost knowledge, and inconsistent workflo
 
 Items are the atomic unit of DevStash. Each item has a **type**. Users can create custom types later, but the MVP ships with these **system types** (immutable):
 
-| Type    | Icon         | Color               | Category | Plan    |
-| ------- | ------------ | ------------------- | -------- | ------- |
-| Snippet | `Code`       | `#3b82f6` (blue)    | text     | Free    |
-| Prompt  | `Sparkles`   | `#8b5cf6` (purple)  | text     | Free    |
-| Command | `Terminal`   | `#f97316` (orange)  | text     | Free    |
-| Note    | `StickyNote` | `#fde047` (yellow)  | text     | Free    |
-| Link    | `Link`       | `#10b981` (emerald) | url      | Free    |
-| File    | `File`       | `#6b7280` (gray)    | file     | **Pro** |
-| Image   | `Image`      | `#ec4899` (pink)    | file     | **Pro** |
+| Type    | Icon         | Color               | Category | Plan |
+| ------- | ------------ | ------------------- | -------- | ---- |
+| Snippet | `Code`       | `#3b82f6` (blue)    | text     | Free |
+| Prompt  | `Sparkles`   | `#8b5cf6` (purple)  | text     | Free |
+| Command | `Terminal`   | `#f97316` (orange)  | text     | Free |
+| Note    | `StickyNote` | `#fde047` (yellow)  | text     | Free |
+| Link    | `Link`       | `#10b981` (emerald) | url      | Free |
 
-**Content categories:** `text` (snippet, prompt, note, command), `url` (link), `file` (file, image).
+**Content categories:** `text` (snippet, prompt, note, command), `url` (link).
 
 **URL structure:** `/items/snippets`, `/items/prompts`, etc.
 
@@ -60,7 +58,6 @@ Collections group items of any type. Items can belong to **multiple collections*
 Examples:
 
 - _React Patterns_ — snippets + notes
-- _Context Files_ — files only
 - _Python Snippets_ — snippets only
 - _Interview Prep_ — mixed
 
@@ -80,7 +77,6 @@ Powerful search across **content, tags, titles, and types**.
 - 🕒 Recently used
 - 📥 Import code from file
 - ✍️ Markdown editor for text types
-- 📤 File upload for file/image types
 - 📦 Export data in multiple formats
 - 🌙 Dark mode by default
 - 🔗 Add/remove items to/from multiple collections
@@ -138,11 +134,8 @@ model User {
 model Item {
   id           String   @id @default(cuid())
   title        String
-  contentType  String   // "text" | "file" | "url"
-  content      String?  // text content (null for files)
-  fileUrl      String?  // Cloudflare R2 URL
-  fileName     String?
-  fileSize     Int?     // bytes
+  contentType  String   // "text" | "url"
+  content      String?
   url          String?  // for link types
   description  String?
   isFavorite   Boolean  @default(false)
@@ -228,9 +221,8 @@ model Tag {
 - **[Prisma 7](https://www.prisma.io/docs)** (latest — check docs) — ORM and migrations
 - **Redis** — optional, for caching
 
-### Storage & Auth
+### Auth
 
-- **[Cloudflare R2](https://developers.cloudflare.com/r2/)** — file uploads (files, images)
 - **[NextAuth v5](https://authjs.dev/)** — Email/password + GitHub OAuth
 
 ### AI
@@ -247,19 +239,17 @@ model Tag {
 
 ## 💰 Monetization (Freemium)
 
-|                      | **Free**                | **Pro — $8/mo or $72/yr** |
-| -------------------- | ----------------------- | ------------------------- |
-| Items                | 50 total                | Unlimited                 |
-| Collections          | 3                       | Unlimited                 |
-| System types         | All except File & Image | All                       |
-| File & Image uploads | ❌                      | ✅                        |
-| Custom types         | ❌                      | ✅ (later)                |
-| Search               | Basic                   | Basic                     |
-| AI auto-tagging      | ❌                      | ✅                        |
-| AI code explanation  | ❌                      | ✅                        |
-| AI prompt optimizer  | ❌                      | ✅                        |
-| Export (JSON / ZIP)  | ❌                      | ✅                        |
-| Support              | Community               | Priority                  |
+|                      | **Free**  | **Pro — $8/mo or $72/yr** |
+| -------------------- | --------- | ------------------------- |
+| Items                | 50 total  | Unlimited                 |
+| Collections          | 3         | Unlimited                 |
+| Custom types         | ❌        | ✅ (later)                |
+| Search               | Basic     | Basic                     |
+| AI auto-tagging      | ❌        | ✅                        |
+| AI code explanation  | ❌        | ✅                        |
+| AI prompt optimizer  | ❌        | ✅                        |
+| Export (JSON / ZIP)  | ❌        | ✅                        |
+| Support              | Community | Priority                  |
 
 > 🛠️ **Development note:** scaffold Pro gating from day one, but keep **all features unlocked for all users during development**.
 
@@ -294,8 +284,8 @@ Use it as a reference
 │  • Commands │   └─────────┘  └─────────┘          │
 │  • Notes    │                                      │
 │  • Links    │   Items (color-coded border)         │
-│  • Files    │   ┌───┐ ┌───┐ ┌───┐ ┌───┐           │
-│  • Images   │   │ 📄│ │ ⚡│ │ 💻│ │ 🔗│           │
+│             │   ┌───┐ ┌───┐ ┌───┐ ┌───┐           │
+│             │   │ 📄│ │ ⚡│ │ 💻│ │ 🔗│           │
 │             │   └───┘ └───┘ └───┘ └───┘           │
 │ Collections │                                      │
 │  • Recent…  │                                      │
@@ -331,6 +321,5 @@ Desktop-first but fully mobile-usable. Sidebar collapses to a drawer on mobile.
 5. Build Item CRUD + drawer UI
 6. Build Collection CRUD + grid layout
 7. Wire up search
-8. Add Cloudflare R2 for file uploads
-9. Integrate Stripe + Pro gating (scaffolded, unlocked in dev)
-10. Layer in AI features
+8. Integrate Stripe + Pro gating (scaffolded, unlocked in dev)
+9. Layer in AI features

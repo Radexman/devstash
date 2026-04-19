@@ -1,14 +1,12 @@
 # Item Types
 
-DevStash ships with **7 immutable system item types**. Each is an `ItemType` row where `isSystem = true` and `userId = null` (available to all users). Users may create custom types in the future, but the MVP set below is fixed.
+DevStash ships with **5 immutable system item types**. Each is an `ItemType` row where `isSystem = true` and `userId = null` (available to all users). Users may create custom types in the future, but the MVP set below is fixed.
 
 Source of truth: [prisma/seed.ts](../prisma/seed.ts) (`SYSTEM_ITEM_TYPES`), [src/lib/item-icons.ts](../src/lib/item-icons.ts) (icon resolution), [prisma/schema.prisma](../prisma/schema.prisma) (`Item` / `ItemType` models).
 
-> Note: `context/project-overview.md` references `src/lib/constants.tsx` as a source, but the actual runtime mapping lives in [src/lib/item-icons.ts](../src/lib/item-icons.ts). The canonical list of names/icons/colors is seeded from [prisma/seed.ts](../prisma/seed.ts).
-
 ---
 
-## The 7 Types
+## The 5 Types
 
 ### 1. Snippet
 - **Icon:** `Code` (lucide)
@@ -50,33 +48,16 @@ Source of truth: [prisma/seed.ts](../prisma/seed.ts) (`SYSTEM_ITEM_TYPES`), [src
 - **Purpose:** Bookmarks — docs, references, articles, tools.
 - **Key fields used:** `title`, `url`, `description`, `tags`.
 
-### 6. File
-- **Icon:** `File`
-- **Color:** `#6b7280` (gray)
-- **Category:** `file`
-- **Plan:** **Pro**
-- **Purpose:** Uploaded files — context files, boilerplates, arbitrary documents, stored in Cloudflare R2.
-- **Key fields used:** `title`, `fileUrl`, `fileName`, `fileSize`, `description`, `tags`.
-
-### 7. Image
-- **Icon:** `Image`
-- **Color:** `#ec4899` (pink)
-- **Category:** `file`
-- **Plan:** **Pro**
-- **Purpose:** Uploaded images — screenshots, diagrams, reference art, stored in Cloudflare R2.
-- **Key fields used:** `title`, `fileUrl`, `fileName`, `fileSize`, `description`, `tags`.
-
 ---
 
 ## Content-Type Classification
 
-Every `Item` row has a `contentType` discriminator (`"text" | "file" | "url"`) that determines which storage fields are populated. This is independent from `itemTypeId`, but the 7 system types map 1:1 to a category:
+Every `Item` row has a `contentType` discriminator (`"text" | "url"`) that determines which storage fields are populated. This is independent from `itemTypeId`, but the 5 system types map 1:1 to a category:
 
-| `contentType` | System types                         | Content stored in                       | Nullable fields              |
-| ------------- | ------------------------------------- | --------------------------------------- | ---------------------------- |
-| `text`        | snippet, prompt, command, note        | `content` (string)                      | `fileUrl`, `fileName`, `fileSize`, `url` |
-| `url`         | link                                  | `url` (string)                          | `content`, `fileUrl`, `fileName`, `fileSize` |
-| `file`        | file, image                           | `fileUrl` + `fileName` + `fileSize`     | `content`, `url`             |
+| `contentType` | System types                   | Content stored in  | Nullable fields |
+| ------------- | ------------------------------ | ------------------ | --------------- |
+| `text`        | snippet, prompt, command, note | `content` (string) | `url`           |
+| `url`         | link                           | `url` (string)     | `content`       |
 
 The `language` field is only meaningful for `text` items where syntax highlighting applies — typically snippets, occasionally commands.
 
@@ -103,20 +84,16 @@ Indexes: `@@index([userId])` and `@@index([itemTypeId])` on `Item`.
 - **Drawer body:**
   - `text` types → markdown editor / syntax-highlighted code block (keyed by `language`)
   - `url` types → clickable link preview
-  - `file` types → filename, size, download/preview button (image types additionally render an inline thumbnail)
-- **Pro gating:** File and Image types display a `PRO` badge in the sidebar and are hidden or disabled for non-Pro users in production. During development all types are unlocked for every user.
-- **Sidebar:** item types appear in the order snippet → prompt → command → note → link → file → image, each showing a per-type count.
+- **Sidebar:** item types appear in the order snippet → prompt → command → note → link, each showing a per-type count.
 
 ---
 
 ## Quick Reference Table
 
-| Type    | Icon         | Color     | Category | Plan | Primary content field       |
-| ------- | ------------ | --------- | -------- | ---- | --------------------------- |
-| Snippet | `Code`       | `#3b82f6` | text     | Free | `content` (+ `language`)    |
-| Prompt  | `Sparkles`   | `#8b5cf6` | text     | Free | `content`                   |
-| Command | `Terminal`   | `#f97316` | text     | Free | `content`                   |
-| Note    | `StickyNote` | `#fde047` | text     | Free | `content` (markdown)        |
-| Link    | `Link`       | `#10b981` | url      | Free | `url`                       |
-| File    | `File`       | `#6b7280` | file     | Pro  | `fileUrl` / `fileName` / `fileSize` |
-| Image   | `Image`      | `#ec4899` | file     | Pro  | `fileUrl` / `fileName` / `fileSize` |
+| Type    | Icon         | Color     | Category | Plan | Primary content field    |
+| ------- | ------------ | --------- | -------- | ---- | ------------------------ |
+| Snippet | `Code`       | `#3b82f6` | text     | Free | `content` (+ `language`) |
+| Prompt  | `Sparkles`   | `#8b5cf6` | text     | Free | `content`                |
+| Command | `Terminal`   | `#f97316` | text     | Free | `content`                |
+| Note    | `StickyNote` | `#fde047` | text     | Free | `content` (markdown)     |
+| Link    | `Link`       | `#10b981` | url      | Free | `url`                    |

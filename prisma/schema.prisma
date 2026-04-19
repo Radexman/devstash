@@ -86,11 +86,8 @@ model User {
 model Item {
   id          String  @id @default(cuid())
   title       String
-  contentType String  // "text" | "file" | "url"
-  content     String? // text content (null for files)
-  fileUrl     String? // Cloudflare R2 URL
-  fileName    String?
-  fileSize    Int?    // bytes
+  contentType String  // "text" | "url"
+  content     String?
   url         String? // for link types
   description String?
   isFavorite  Boolean @default(false)

@@ -11,8 +11,6 @@ const SYSTEM_ITEM_TYPES = [
   { name: "prompt", icon: "Sparkles", color: "#8b5cf6" },
   { name: "command", icon: "Terminal", color: "#f97316" },
   { name: "note", icon: "StickyNote", color: "#fde047" },
-  { name: "file", icon: "File", color: "#6b7280" },
-  { name: "image", icon: "Image", color: "#ec4899" },
   { name: "link", icon: "Link", color: "#10b981" },
 ];
 
