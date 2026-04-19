@@ -2,24 +2,15 @@
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-Remove the File and Image item types from the project entirely.
-
-- Drop `fileUrl`, `fileName`, `fileSize` from the `Item` model and remove the `"file"` contentType branch
-- Remove `file` and `image` entries from the seed, `iconMap`, item-list type labels, and sidebar PRO gating
-- Remove the file-specific viewer block from `ItemDrawer`
-- Update docs (`context/project-overview.md`, `docs/item-types.md`, `docs/item-crud-architecture.md`) to reflect a 5-type system (snippet, prompt, command, note, link)
-- Run a Prisma migration to drop the removed columns
+<!-- Goals will be populated when a feature is loaded -->
 
 ## Notes
 
-- No existing file/image data exists in dev — dropping columns is safe
-- Cloudflare R2 / file-upload tooling is not wired up in the repo, so nothing to uninstall
-- NewItemDialog and the items server action already only allow snippet/prompt/command/note/link, so no change needed there
-- `User.image` is NextAuth's avatar URL — keep it
+<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -50,3 +41,4 @@ Remove the File and Image item types from the project entirely.
 - 2026-04-15: Item Create — New createItem query (resolves system ItemType by name, connectOrCreate tags, sets contentType text/url) and createItem server action with Zod validation (enum type, title required, link requires URL via superRefine), new NewItemDialog client component wired into TopBar with type selector and dynamic content/language/url fields, toast + close + form reset + router.refresh() on success, Vitest coverage for unauthorized/empty title/link without url/success
 - 2026-04-16: Code Editor — Monaco Editor component (CodeEditor.tsx) with macOS window dots, copy button, language label, vs-dark theme, fluid height (max 400px). Replaces <pre><code> display and Textarea editing for snippet/command types in ItemDrawer and NewItemDialog. Notes/prompts keep Textarea.
 - 2026-04-16: Markdown Editor — MarkdownEditor component (MarkdownEditor.tsx) with Write/Preview tabs, react-markdown + remark-gfm, dark theme .markdown-preview CSS (headings, code blocks, lists, blockquotes, links, tables). Replaces Textarea for note/prompt types in ItemDrawer (view + edit) and NewItemDialog.
+- 2026-04-19: Remove File/Image Types — Dropped File and Image system types, removed fileUrl/fileName/fileSize columns from Item (prisma migration), trimmed seed, iconMap, TYPE_LABELS, sidebar PRO gating, and ItemDrawer file viewer. Updated project-overview, item-types, item-crud-architecture docs to reflect the 5-type system (snippet, prompt, command, note, link).
