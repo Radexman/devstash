@@ -1,7 +1,7 @@
-import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { NewItemDialog } from '@/components/items/NewItemDialog';
+import { NewCollectionDialog } from '@/components/collections/NewCollectionDialog';
 
 export function TopBar() {
 	return (
@@ -22,10 +22,7 @@ export function TopBar() {
 			</div>
 
 			<div className="flex items-center gap-2">
-				<Button variant="outline">
-					<Plus className="mr-1 h-4 w-4" />
-					New Collection
-				</Button>
+				<NewCollectionDialog />
 				<NewItemDialog />
 			</div>
 		</header>
