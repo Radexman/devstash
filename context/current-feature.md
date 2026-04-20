@@ -1,24 +1,12 @@
-# Current Feature: Item → Collections Assignment
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Let users assign an item to zero, one, or many collections from the new item form
-- Let users update an item's collection memberships from the edit form in the item drawer
-- Persist membership through the existing `ItemCollection` join table
-- Show the user's available collections in a multi-select input within both forms
-
 ## Notes
-
-- Scope is limited to the forms — collection detail/list pages are out of scope for this feature
-- Collections shown must be user-scoped (only the signed-in user's collections)
-- Both `createItem` and `updateItem` server actions + their Zod schemas need to accept a `collectionIds: string[]` field
-- Queries: `createItem` should `connect` via the `collections` (`ItemCollection`) relation; `updateItem` should reconcile additions/removals safely
-- `getItemDetail` should return the item's current `collectionIds` so the edit form can pre-populate
-- Add Vitest coverage for the new action paths (empty set, one, many, ownership check that collections belong to the user)
 
 ## History
 
@@ -51,3 +39,4 @@ In Progress
 - 2026-04-16: Markdown Editor — MarkdownEditor component (MarkdownEditor.tsx) with Write/Preview tabs, react-markdown + remark-gfm, dark theme .markdown-preview CSS (headings, code blocks, lists, blockquotes, links, tables). Replaces Textarea for note/prompt types in ItemDrawer (view + edit) and NewItemDialog.
 - 2026-04-19: Remove File/Image Types — Dropped File and Image system types, removed fileUrl/fileName/fileSize columns from Item (prisma migration), trimmed seed, iconMap, TYPE_LABELS, sidebar PRO gating, and ItemDrawer file viewer. Updated project-overview, item-types, item-crud-architecture docs to reflect the 5-type system (snippet, prompt, command, note, link).
 - 2026-04-20: Collection Create — New createCollection query in src/lib/db/collections.ts (user-scoped via user.connect, returns CollectionSummary) and createCollection server action with Zod validation (name required, description trimmed/nullable), new NewCollectionDialog client component replacing TopBar placeholder button, toast + close + form reset + router.refresh() on success, Vitest coverage for unauthorized/empty name/success/description trim/query throw.
+- 2026-04-20: Item → Collections Assignment — New getUserCollections / getUserCollectionIds queries (user-scoped, alphabetical), auth-checked GET /api/collections route, CollectionMultiSelect client component (fetches on mount, Badge-chip toggle UI) wired into NewItemDialog and ItemDrawer edit form with pre-population from item.collections. createItem/updateItem actions + queries accept collectionIds with ownership validation (foreign ids silently dropped); createItem uses nested ItemCollection writes, updateItem reconciles via $transaction (deleteMany + createMany). Vitest coverage for default-empty, owned pass-through, and foreign-id filtering on both actions.
