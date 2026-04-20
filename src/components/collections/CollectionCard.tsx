@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { iconMap } from '@/lib/item-icons';
+import { CollectionCardMenu } from '@/components/collections/CollectionCardMenu';
 import type { CollectionWithMeta } from '@/lib/db/collections';
 
 interface CollectionCardProps {
@@ -17,11 +18,20 @@ export function CollectionCard({ collection }: CollectionCardProps) {
 				borderLeftColor: collection.dominantColor ?? undefined,
 			}}
 		>
-			<div className="mb-2 flex items-center justify-between">
-				<h3 className="font-medium">{collection.name}</h3>
-				{collection.isFavorite && (
-					<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
-				)}
+			<div className="mb-2 flex items-center justify-between gap-2">
+				<h3 className="truncate font-medium">{collection.name}</h3>
+				<div className="flex shrink-0 items-center gap-1">
+					{collection.isFavorite && (
+						<Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+					)}
+					<CollectionCardMenu
+						collection={{
+							id: collection.id,
+							name: collection.name,
+							description: collection.description,
+						}}
+					/>
+				</div>
 			</div>
 			<p className="text-sm text-muted-foreground">
 				{collection.itemCount} {collection.itemCount === 1 ? 'item' : 'items'}

@@ -1,7 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
-import { FolderOpen, Star } from 'lucide-react';
+import { FolderOpen } from 'lucide-react';
 import { auth } from '@/auth';
 import { ItemCard } from '@/components/items/ItemCard';
+import { CollectionDetailActions } from '@/components/collections/CollectionDetailActions';
 import { getCollectionDetail } from '@/lib/db/collections';
 
 export default async function CollectionDetailPage({
@@ -24,17 +25,12 @@ export default async function CollectionDetailPage({
 
 	return (
 		<div className="space-y-6">
-			<div className="flex items-center gap-3">
-				<div className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
+			<div className="flex items-start gap-3">
+				<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
 					<FolderOpen className="h-5 w-5" />
 				</div>
 				<div className="min-w-0 flex-1">
-					<div className="flex items-center gap-2">
-						<h1 className="truncate text-2xl font-bold">{collection.name}</h1>
-						{collection.isFavorite && (
-							<Star className="h-5 w-5 shrink-0 fill-yellow-500 text-yellow-500" />
-						)}
-					</div>
+					<h1 className="truncate text-2xl font-bold">{collection.name}</h1>
 					<p className="text-sm text-muted-foreground">
 						{collection.items.length}{' '}
 						{collection.items.length === 1 ? 'item' : 'items'}
@@ -45,6 +41,14 @@ export default async function CollectionDetailPage({
 						</p>
 					)}
 				</div>
+				<CollectionDetailActions
+					collection={{
+						id: collection.id,
+						name: collection.name,
+						description: collection.description,
+						isFavorite: collection.isFavorite,
+					}}
+				/>
 			</div>
 
 			{collection.items.length === 0 ? (

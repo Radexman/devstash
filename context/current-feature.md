@@ -1,12 +1,28 @@
-# Current Feature
+# Current Feature: Collection Edit/Delete/Favorite Actions
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add Edit, Delete, and Favorite buttons to `/collections/[id]` detail page header
+- Favorite button is icon-only placeholder — no backend wiring yet
+- Edit opens a modal (shadcn Dialog) to edit collection metadata (name, description)
+- Delete opens a confirmation dialog; on confirm, deletes the collection but **preserves items** (remove collection association only, do not cascade-delete items)
+- On `CollectionCard` (dashboard + `/collections` index), the 3-dots icon opens a shadcn DropdownMenu with Edit / Delete / Favorite actions
+- Clicking anywhere else on the card continues to navigate to `/collections/[id]`
+- Dropdown actions on the card should not trigger card navigation (stop propagation)
+
 ## Notes
+
+- Reuse existing `NewCollectionDialog` pattern for the edit modal (likely extract a shared `CollectionFormDialog` or add an edit mode)
+- New server actions needed: `updateCollection` (name/description, ownership check, Zod validation) and `deleteCollection` (ownership check, deletes `Collection` + `ItemCollection` join rows, preserves `Item` rows)
+- Prisma cascade: `ItemCollection` already cascades on `Collection` delete; `Item` is NOT related to `Collection` directly, so items survive naturally
+- Add Vitest coverage for both new server actions (unauthorized / not-found / success / ownership)
+- Use existing toast + `router.refresh()` pattern on success
+- After delete from `/collections/[id]`, redirect to `/collections`
+- Favorite button: just the Star icon toggle placeholder (no action wired)
 
 ## History
 
