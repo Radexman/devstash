@@ -156,3 +156,40 @@ export async function getCollectionsForDashboard(userId: string): Promise<Collec
     };
   });
 }
+
+export interface CollectionSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  isFavorite: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateCollectionInput {
+  name: string;
+  description: string | null;
+}
+
+export async function createCollection(
+  userId: string,
+  data: CreateCollectionInput,
+): Promise<CollectionSummary> {
+  const created = await prisma.collection.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      user: { connect: { id: userId } },
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  return created;
+}
