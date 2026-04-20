@@ -10,6 +10,10 @@ vi.mock('@/lib/db/items', () => ({
   createItem: vi.fn(),
 }));
 
+vi.mock('@/lib/db/collections', () => ({
+  getUserCollectionIds: vi.fn(),
+}));
+
 import { auth } from '@/auth';
 import {
   updateItem as updateItemQuery,
@@ -17,12 +21,14 @@ import {
   createItem as createItemQuery,
   type ItemDetail,
 } from '@/lib/db/items';
+import { getUserCollectionIds } from '@/lib/db/collections';
 import { updateItem, deleteItem, createItem } from './items';
 
 const mockAuth = vi.mocked(auth);
 const mockUpdate = vi.mocked(updateItemQuery);
 const mockDelete = vi.mocked(deleteItemQuery);
 const mockCreate = vi.mocked(createItemQuery);
+const mockOwnedCollections = vi.mocked(getUserCollectionIds);
 
 const fakeDetail: ItemDetail = {
   id: 'i1',
@@ -45,6 +51,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // @ts-expect-error partial session
   mockAuth.mockResolvedValue({ user: { id: 'u1' } });
+  mockOwnedCollections.mockImplementation(async (_uid, ids) => ids);
 });
 
 describe('updateItem action', () => {
@@ -126,6 +133,43 @@ describe('updateItem action', () => {
       tags: [],
     });
     expect(res).toEqual({ success: true, data: fakeDetail });
+  });
+
+  it('passes empty collectionIds when none provided', async () => {
+    mockUpdate.mockResolvedValueOnce(fakeDetail);
+    await updateItem('i1', {
+      title: 'ok',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+    });
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'i1',
+      'u1',
+      expect.objectContaining({ collectionIds: [] }),
+    );
+  });
+
+  it('forwards only user-owned collectionIds to query', async () => {
+    mockUpdate.mockResolvedValueOnce(fakeDetail);
+    mockOwnedCollections.mockResolvedValueOnce(['c1']);
+    await updateItem('i1', {
+      title: 'ok',
+      description: null,
+      content: null,
+      url: null,
+      language: null,
+      tags: [],
+      collectionIds: ['c1', 'c-foreign'],
+    });
+    expect(mockOwnedCollections).toHaveBeenCalledWith('u1', ['c1', 'c-foreign']);
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'i1',
+      'u1',
+      expect.objectContaining({ collectionIds: ['c1'] }),
+    );
   });
 });
 
@@ -223,8 +267,48 @@ describe('createItem action', () => {
         language: 'ts',
         url: null,
         tags: ['foo', 'bar'],
+        collectionIds: [],
       }),
     );
     expect(res).toEqual({ success: true, data: fakeDetail });
+  });
+
+  it('passes owned collectionIds through to create query', async () => {
+    mockCreate.mockResolvedValueOnce(fakeDetail);
+    mockOwnedCollections.mockResolvedValueOnce(['c1', 'c2']);
+    await createItem({
+      type: 'note',
+      title: 'a note',
+      description: null,
+      content: 'body',
+      url: null,
+      language: null,
+      tags: [],
+      collectionIds: ['c1', 'c2'],
+    });
+    expect(mockOwnedCollections).toHaveBeenCalledWith('u1', ['c1', 'c2']);
+    expect(mockCreate).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({ collectionIds: ['c1', 'c2'] }),
+    );
+  });
+
+  it('drops foreign collectionIds before calling create query', async () => {
+    mockCreate.mockResolvedValueOnce(fakeDetail);
+    mockOwnedCollections.mockResolvedValueOnce([]);
+    await createItem({
+      type: 'note',
+      title: 'a note',
+      description: null,
+      content: 'body',
+      url: null,
+      language: null,
+      tags: [],
+      collectionIds: ['c-foreign'],
+    });
+    expect(mockCreate).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({ collectionIds: [] }),
+    );
   });
 });

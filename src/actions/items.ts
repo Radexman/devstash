@@ -8,6 +8,7 @@ import {
   updateItem as updateItemQuery,
   type ItemDetail,
 } from '@/lib/db/items';
+import { getUserCollectionIds } from '@/lib/db/collections';
 
 const ITEM_TYPES = ['snippet', 'prompt', 'command', 'note', 'link'] as const;
 type CreateItemType = (typeof ITEM_TYPES)[number];
@@ -49,6 +50,7 @@ const updateItemSchema = z.object({
     .array(z.string())
     .default([])
     .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
+  collectionIds: z.array(z.string()).default([]),
 });
 
 export type UpdateItemPayload = z.input<typeof updateItemSchema>;
@@ -73,7 +75,14 @@ export async function updateItem(
   }
 
   try {
-    const updated = await updateItemQuery(itemId, session.user.id, parsed.data);
+    const ownedCollectionIds = await getUserCollectionIds(
+      session.user.id,
+      parsed.data.collectionIds,
+    );
+    const updated = await updateItemQuery(itemId, session.user.id, {
+      ...parsed.data,
+      collectionIds: ownedCollectionIds,
+    });
     if (!updated) {
       return { success: false, error: 'Item not found' };
     }
@@ -122,6 +131,7 @@ const createItemSchema = z
       .array(z.string())
       .default([])
       .transform((arr) => arr.map((t) => t.trim()).filter((t) => t.length > 0)),
+    collectionIds: z.array(z.string()).default([]),
   })
   .superRefine((data, ctx) => {
     if (data.type === 'link' && !data.url) {
@@ -157,6 +167,10 @@ export async function createItem(
   const supportsUrl = type === 'link';
 
   try {
+    const ownedCollectionIds = await getUserCollectionIds(
+      session.user.id,
+      rest.collectionIds,
+    );
     const created = await createItemQuery(session.user.id, {
       typeName,
       title: rest.title,
@@ -165,6 +179,7 @@ export async function createItem(
       url: supportsUrl ? rest.url : null,
       language: supportsLanguage ? rest.language : null,
       tags: rest.tags,
+      collectionIds: ownedCollectionIds,
     });
     if (!created) {
       return { success: false, error: 'Item type not found' };

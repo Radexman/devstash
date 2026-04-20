@@ -166,6 +166,31 @@ export interface CollectionSummary {
   updatedAt: Date;
 }
 
+export interface CollectionOption {
+  id: string;
+  name: string;
+}
+
+export async function getUserCollections(userId: string): Promise<CollectionOption[]> {
+  return prisma.collection.findMany({
+    where: { userId },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
+  });
+}
+
+export async function getUserCollectionIds(
+  userId: string,
+  ids: string[],
+): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const rows = await prisma.collection.findMany({
+    where: { userId, id: { in: ids } },
+    select: { id: true },
+  });
+  return rows.map((r) => r.id);
+}
+
 export interface CreateCollectionInput {
   name: string;
   description: string | null;

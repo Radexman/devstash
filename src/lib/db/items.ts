@@ -120,6 +120,7 @@ export interface UpdateItemInput {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds: string[];
 }
 
 export async function updateItem(
@@ -133,23 +134,36 @@ export async function updateItem(
   });
   if (!existing) return null;
 
-  await prisma.item.update({
-    where: { id: itemId },
-    data: {
-      title: data.title,
-      description: data.description,
-      content: data.content,
-      url: data.url,
-      language: data.language,
-      tags: {
-        set: [],
-        connectOrCreate: data.tags.map((name) => ({
-          where: { name },
-          create: { name },
-        })),
+  await prisma.$transaction([
+    prisma.item.update({
+      where: { id: itemId },
+      data: {
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        url: data.url,
+        language: data.language,
+        tags: {
+          set: [],
+          connectOrCreate: data.tags.map((name) => ({
+            where: { name },
+            create: { name },
+          })),
+        },
       },
-    },
-  });
+    }),
+    prisma.itemCollection.deleteMany({ where: { itemId } }),
+    ...(data.collectionIds.length > 0
+      ? [
+          prisma.itemCollection.createMany({
+            data: data.collectionIds.map((collectionId) => ({
+              itemId,
+              collectionId,
+            })),
+          }),
+        ]
+      : []),
+  ]);
 
   return getItemDetail(itemId, userId);
 }
@@ -162,6 +176,7 @@ export interface CreateItemInput {
   url: string | null;
   language: string | null;
   tags: string[];
+  collectionIds: string[];
 }
 
 export async function createItem(
@@ -192,6 +207,14 @@ export async function createItem(
           create: { name },
         })),
       },
+      collections:
+        data.collectionIds.length > 0
+          ? {
+              create: data.collectionIds.map((collectionId) => ({
+                collection: { connect: { id: collectionId } },
+              })),
+            }
+          : undefined,
     },
     select: { id: true },
   });
