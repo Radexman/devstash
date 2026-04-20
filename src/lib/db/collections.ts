@@ -334,3 +334,46 @@ export async function createCollection(
 
   return created;
 }
+
+export interface UpdateCollectionInput {
+  name: string;
+  description: string | null;
+}
+
+export async function updateCollection(
+  collectionId: string,
+  userId: string,
+  data: UpdateCollectionInput,
+): Promise<CollectionSummary | null> {
+  const result = await prisma.collection.updateMany({
+    where: { id: collectionId, userId },
+    data: {
+      name: data.name,
+      description: data.description,
+    },
+  });
+
+  if (result.count === 0) return null;
+
+  return prisma.collection.findUnique({
+    where: { id: collectionId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+}
+
+export async function deleteCollection(
+  collectionId: string,
+  userId: string,
+): Promise<boolean> {
+  const result = await prisma.collection.deleteMany({
+    where: { id: collectionId, userId },
+  });
+  return result.count > 0;
+}

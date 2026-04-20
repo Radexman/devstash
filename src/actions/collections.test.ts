@@ -6,17 +6,27 @@ vi.mock('@/auth', () => ({
 
 vi.mock('@/lib/db/collections', () => ({
   createCollection: vi.fn(),
+  updateCollection: vi.fn(),
+  deleteCollection: vi.fn(),
 }));
 
 import { auth } from '@/auth';
 import {
   createCollection as createCollectionQuery,
+  updateCollection as updateCollectionQuery,
+  deleteCollection as deleteCollectionQuery,
   type CollectionSummary,
 } from '@/lib/db/collections';
-import { createCollection } from './collections';
+import {
+  createCollection,
+  updateCollection,
+  deleteCollection,
+} from './collections';
 
 const mockAuth = vi.mocked(auth);
 const mockCreate = vi.mocked(createCollectionQuery);
+const mockUpdate = vi.mocked(updateCollectionQuery);
+const mockDelete = vi.mocked(deleteCollectionQuery);
 
 const fakeCollection: CollectionSummary = {
   id: 'c1',
@@ -80,5 +90,90 @@ describe('createCollection action', () => {
     mockCreate.mockRejectedValueOnce(new Error('db down'));
     const res = await createCollection({ name: 'x', description: null });
     expect(res).toEqual({ success: false, error: 'Failed to create collection' });
+  });
+});
+
+describe('updateCollection action', () => {
+  it('rejects unauthorized', async () => {
+    // @ts-expect-error null session
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await updateCollection('c1', { name: 'x', description: null });
+    expect(res).toEqual({ success: false, error: 'Unauthorized' });
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects empty name', async () => {
+    const res = await updateCollection('c1', { name: '   ', description: null });
+    expect(res.success).toBe(false);
+    expect(mockUpdate).not.toHaveBeenCalled();
+  });
+
+  it('returns not found when query returns null', async () => {
+    mockUpdate.mockResolvedValueOnce(null);
+    const res = await updateCollection('c1', {
+      name: 'React Patterns',
+      description: null,
+    });
+    expect(res).toEqual({ success: false, error: 'Collection not found' });
+  });
+
+  it('updates and returns summary on success', async () => {
+    const updated: CollectionSummary = {
+      ...fakeCollection,
+      name: 'React Patterns v2',
+      description: 'updated',
+    };
+    mockUpdate.mockResolvedValueOnce(updated);
+    const res = await updateCollection('c1', {
+      name: '  React Patterns v2 ',
+      description: '  updated ',
+    });
+    expect(mockUpdate).toHaveBeenCalledWith(
+      'c1',
+      'u1',
+      expect.objectContaining({
+        name: 'React Patterns v2',
+        description: 'updated',
+      }),
+    );
+    expect(res).toEqual({ success: true, data: updated });
+  });
+
+  it('returns error when the query throws', async () => {
+    mockUpdate.mockRejectedValueOnce(new Error('db down'));
+    const res = await updateCollection('c1', {
+      name: 'x',
+      description: null,
+    });
+    expect(res).toEqual({ success: false, error: 'Failed to update collection' });
+  });
+});
+
+describe('deleteCollection action', () => {
+  it('rejects unauthorized', async () => {
+    // @ts-expect-error null session
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await deleteCollection('c1');
+    expect(res).toEqual({ success: false, error: 'Unauthorized' });
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it('returns not found when query returns false', async () => {
+    mockDelete.mockResolvedValueOnce(false);
+    const res = await deleteCollection('c1');
+    expect(res).toEqual({ success: false, error: 'Collection not found' });
+  });
+
+  it('deletes and returns id on success', async () => {
+    mockDelete.mockResolvedValueOnce(true);
+    const res = await deleteCollection('c1');
+    expect(mockDelete).toHaveBeenCalledWith('c1', 'u1');
+    expect(res).toEqual({ success: true, data: { id: 'c1' } });
+  });
+
+  it('returns error when the query throws', async () => {
+    mockDelete.mockRejectedValueOnce(new Error('db down'));
+    const res = await deleteCollection('c1');
+    expect(res).toEqual({ success: false, error: 'Failed to delete collection' });
   });
 });
