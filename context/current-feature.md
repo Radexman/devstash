@@ -1,28 +1,12 @@
-# Current Feature: Collection Edit/Delete/Favorite Actions
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add Edit, Delete, and Favorite buttons to `/collections/[id]` detail page header
-- Favorite button is icon-only placeholder — no backend wiring yet
-- Edit opens a modal (shadcn Dialog) to edit collection metadata (name, description)
-- Delete opens a confirmation dialog; on confirm, deletes the collection but **preserves items** (remove collection association only, do not cascade-delete items)
-- On `CollectionCard` (dashboard + `/collections` index), the 3-dots icon opens a shadcn DropdownMenu with Edit / Delete / Favorite actions
-- Clicking anywhere else on the card continues to navigate to `/collections/[id]`
-- Dropdown actions on the card should not trigger card navigation (stop propagation)
-
 ## Notes
-
-- Reuse existing `NewCollectionDialog` pattern for the edit modal (likely extract a shared `CollectionFormDialog` or add an edit mode)
-- New server actions needed: `updateCollection` (name/description, ownership check, Zod validation) and `deleteCollection` (ownership check, deletes `Collection` + `ItemCollection` join rows, preserves `Item` rows)
-- Prisma cascade: `ItemCollection` already cascades on `Collection` delete; `Item` is NOT related to `Collection` directly, so items survive naturally
-- Add Vitest coverage for both new server actions (unauthorized / not-found / success / ownership)
-- Use existing toast + `router.refresh()` pattern on success
-- After delete from `/collections/[id]`, redirect to `/collections`
-- Favorite button: just the Star icon toggle placeholder (no action wired)
 
 ## History
 
@@ -57,3 +41,4 @@ In Progress
 - 2026-04-20: Collection Create — New createCollection query in src/lib/db/collections.ts (user-scoped via user.connect, returns CollectionSummary) and createCollection server action with Zod validation (name required, description trimmed/nullable), new NewCollectionDialog client component replacing TopBar placeholder button, toast + close + form reset + router.refresh() on success, Vitest coverage for unauthorized/empty name/success/description trim/query throw.
 - 2026-04-20: Item → Collections Assignment — New getUserCollections / getUserCollectionIds queries (user-scoped, alphabetical), auth-checked GET /api/collections route, CollectionMultiSelect client component (fetches on mount, Badge-chip toggle UI) wired into NewItemDialog and ItemDrawer edit form with pre-population from item.collections. createItem/updateItem actions + queries accept collectionIds with ownership validation (foreign ids silently dropped); createItem uses nested ItemCollection writes, updateItem reconciles via $transaction (deleteMany + createMany). Vitest coverage for default-empty, owned pass-through, and foreign-id filtering on both actions.
 - 2026-04-20: Collections Pages — New /collections index (getAllCollectionsForUser, favorites first then updatedAt desc) and /collections/[id] detail (getCollectionDetail, user-scoped with notFound on miss) using shared dashboard shell layout. Extracted CollectionCard component from CollectionsSection, wrapped in Link to /collections/[id], reused on dashboard. Items in collection detail rendered via existing ItemCard in 1/2/3-col responsive grid. Proxy matcher + protected prefix extended to /collections/*.
+- 2026-04-20: Collection Edit/Delete/Favorite Actions — New updateCollection + deleteCollection queries and server actions (Zod + ownership checks). Reusable EditCollectionDialog + DeleteCollectionDialog. CollectionCardMenu adds a 3-dots dropdown (Edit/Favorite/Delete) to cards with preventDefault/stopPropagation so the card Link still navigates on non-trigger clicks. CollectionDetailActions puts Favorite/Edit/Delete icon buttons on /collections/[id]; delete redirects to /collections. Items are preserved on collection delete (Prisma cascades ItemCollection only). Favorite is a placeholder toast. Vitest coverage for both new actions.
