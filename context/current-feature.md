@@ -6,11 +6,7 @@ Not Started
 
 ## Goals
 
-<!-- Goals will be populated when a feature is loaded -->
-
 ## Notes
-
-<!-- Notes will be populated when a feature is loaded -->
 
 ## History
 
@@ -42,3 +38,4 @@ Not Started
 - 2026-04-16: Code Editor — Monaco Editor component (CodeEditor.tsx) with macOS window dots, copy button, language label, vs-dark theme, fluid height (max 400px). Replaces <pre><code> display and Textarea editing for snippet/command types in ItemDrawer and NewItemDialog. Notes/prompts keep Textarea.
 - 2026-04-16: Markdown Editor — MarkdownEditor component (MarkdownEditor.tsx) with Write/Preview tabs, react-markdown + remark-gfm, dark theme .markdown-preview CSS (headings, code blocks, lists, blockquotes, links, tables). Replaces Textarea for note/prompt types in ItemDrawer (view + edit) and NewItemDialog.
 - 2026-04-19: Remove File/Image Types — Dropped File and Image system types, removed fileUrl/fileName/fileSize columns from Item (prisma migration), trimmed seed, iconMap, TYPE_LABELS, sidebar PRO gating, and ItemDrawer file viewer. Updated project-overview, item-types, item-crud-architecture docs to reflect the 5-type system (snippet, prompt, command, note, link).
+- 2026-04-20: Collection Create — New createCollection query in src/lib/db/collections.ts (user-scoped via user.connect, returns CollectionSummary) and createCollection server action with Zod validation (name required, description trimmed/nullable), new NewCollectionDialog client component replacing TopBar placeholder button, toast + close + form reset + router.refresh() on success, Vitest coverage for unauthorized/empty name/success/description trim/query throw.
