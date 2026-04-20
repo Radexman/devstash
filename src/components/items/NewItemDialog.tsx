@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
+import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import { createItem } from '@/actions/items';
 
 const TYPES = [
@@ -38,6 +39,7 @@ interface FormState {
   url: string;
   language: string;
   tags: string;
+  collectionIds: string[];
 }
 
 const emptyForm: FormState = {
@@ -48,6 +50,7 @@ const emptyForm: FormState = {
   url: '',
   language: '',
   tags: '',
+  collectionIds: [],
 };
 
 export function NewItemDialog() {
@@ -73,6 +76,7 @@ export function NewItemDialog() {
       url: showUrl ? form.url : null,
       language: showLanguage ? form.language : null,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+      collectionIds: form.collectionIds,
     });
     setSaving(false);
 
@@ -201,6 +205,11 @@ export function NewItemDialog() {
               placeholder="comma, separated, tags"
             />
           </div>
+
+          <CollectionMultiSelect
+            value={form.collectionIds}
+            onChange={(ids) => set('collectionIds', ids)}
+          />
         </div>
 
         <DialogFooter>

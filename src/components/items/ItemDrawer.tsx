@@ -30,6 +30,7 @@ import { formatDate } from '@/lib/format';
 import { deleteItem, updateItem } from '@/actions/items';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
+import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -42,6 +43,7 @@ interface EditForm {
 	url: string;
 	language: string;
 	tags: string;
+	collectionIds: string[];
 }
 
 function toEditForm(item: ItemDetail): EditForm {
@@ -52,6 +54,7 @@ function toEditForm(item: ItemDetail): EditForm {
 		url: item.url ?? '',
 		language: item.language ?? '',
 		tags: item.tags.map((t) => t.name).join(', '),
+		collectionIds: item.collections.map((c) => c.id),
 	};
 }
 
@@ -135,6 +138,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 			url: supportsUrl ? form.url : null,
 			language: supportsLanguage ? form.language : null,
 			tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+			collectionIds: form.collectionIds,
 		});
 		setSaving(false);
 
@@ -526,20 +530,10 @@ function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
 				/>
 			</div>
 
-			{item.collections.length > 0 && (
-				<div>
-					<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-						Collections
-					</h3>
-					<div className="flex flex-wrap gap-1">
-						{item.collections.map((c) => (
-							<Badge key={c.id} variant="outline">
-								{c.name}
-							</Badge>
-						))}
-					</div>
-				</div>
-			)}
+			<CollectionMultiSelect
+				value={form.collectionIds}
+				onChange={(ids) => set('collectionIds', ids)}
+			/>
 
 			<Separator />
 
