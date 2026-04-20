@@ -1,27 +1,12 @@
-# Current Feature: Global Search / Command Palette
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Cmd+K (Mac) / Ctrl+K (Windows) opens a global command palette
-- Fuzzy search across all items and collections
-- Grouped results: Items section and Collections section
-- Keyboard navigation (arrow keys, Enter to select)
-- Show item type icon for items; show item count for collections
-- Selecting an item opens the item drawer; selecting a collection navigates to its page
-- TopBar search input opens the palette on click
-- Placeholder in TopBar search input shows a ⌘K hint
-
 ## Notes
-
-- Use shadcn `cmdk` Command component
-- Client-side fuzzy search — no server round-trips once data is loaded
-- Pre-fetch searchable data on app load
-- Search data shape: items (id, title, type, content preview), collections (id, name, itemCount)
-- Reuse existing data fetching functions where possible
 
 ## History
 
@@ -57,3 +42,4 @@ In Progress
 - 2026-04-20: Item → Collections Assignment — New getUserCollections / getUserCollectionIds queries (user-scoped, alphabetical), auth-checked GET /api/collections route, CollectionMultiSelect client component (fetches on mount, Badge-chip toggle UI) wired into NewItemDialog and ItemDrawer edit form with pre-population from item.collections. createItem/updateItem actions + queries accept collectionIds with ownership validation (foreign ids silently dropped); createItem uses nested ItemCollection writes, updateItem reconciles via $transaction (deleteMany + createMany). Vitest coverage for default-empty, owned pass-through, and foreign-id filtering on both actions.
 - 2026-04-20: Collections Pages — New /collections index (getAllCollectionsForUser, favorites first then updatedAt desc) and /collections/[id] detail (getCollectionDetail, user-scoped with notFound on miss) using shared dashboard shell layout. Extracted CollectionCard component from CollectionsSection, wrapped in Link to /collections/[id], reused on dashboard. Items in collection detail rendered via existing ItemCard in 1/2/3-col responsive grid. Proxy matcher + protected prefix extended to /collections/*.
 - 2026-04-20: Collection Edit/Delete/Favorite Actions — New updateCollection + deleteCollection queries and server actions (Zod + ownership checks). Reusable EditCollectionDialog + DeleteCollectionDialog. CollectionCardMenu adds a 3-dots dropdown (Edit/Favorite/Delete) to cards with preventDefault/stopPropagation so the card Link still navigates on non-trigger clicks. CollectionDetailActions puts Favorite/Edit/Delete icon buttons on /collections/[id]; delete redirects to /collections. Items are preserved on collection delete (Prisma cascades ItemCollection only). Favorite is a placeholder toast. Vitest coverage for both new actions.
+- 2026-04-20: Global Search / Command Palette — Cmd+K/Ctrl+K opens a shadcn cmdk palette with fuzzy client-side search. New getSearchData query (items + collections, user-scoped) and auth-checked /api/search route. CommandPaletteProvider prefetches on mount and open, registers the global hotkey; CommandPalette groups results (items show type icon + preview, collections show item count), selects open the item drawer or navigate to /collections/[id]. SearchTrigger replaces the TopBar input with a button showing the ⌘K/Ctrl+K hint. Fixed shadcn CommandDialog to wrap children in <Command> so CommandInput has cmdk context. Vitest coverage for getSearchData preview precedence and truncation.
