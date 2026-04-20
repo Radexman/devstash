@@ -1,12 +1,10 @@
 'use client';
 
-import {
-	Clock,
-	Star,
-} from 'lucide-react';
+import { Clock, Copy, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
+import { copyItemContent } from '@/lib/copy-item';
 import { useItemDrawer } from '@/components/items/ItemDrawerProvider';
 import type { ItemWithType } from '@/lib/db/items';
 
@@ -25,12 +23,20 @@ export function RecentItems({ items }: RecentItemsProps) {
 			<div className="space-y-2">
 				{items.map((item) => {
 					const Icon = iconMap[item.itemType.icon];
+					const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							openItem(item.id);
+						}
+					};
 					return (
-						<button
+						<div
 							key={item.id}
-							type="button"
+							role="button"
+							tabIndex={0}
 							onClick={() => openItem(item.id)}
-							className="flex w-full items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent/50"
+							onKeyDown={handleKey}
+							className="group flex w-full cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3 text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							style={{
 								borderLeftWidth: '3px',
 								borderLeftColor: item.itemType.color,
@@ -66,6 +72,17 @@ export function RecentItems({ items }: RecentItemsProps) {
 									</div>
 								)}
 							</div>
+							<button
+								type="button"
+								aria-label="Copy"
+								onClick={(e) => {
+									e.stopPropagation();
+									copyItemContent(item);
+								}}
+								className="shrink-0 rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-accent hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100"
+							>
+								<Copy className="h-4 w-4" />
+							</button>
 							<div className="flex shrink-0 items-center gap-2">
 								<Badge variant="outline" className="text-xs" style={{ borderColor: item.itemType.color, color: item.itemType.color }}>
 									{item.itemType.name}
@@ -74,7 +91,7 @@ export function RecentItems({ items }: RecentItemsProps) {
 									{formatDate(item.updatedAt)}
 								</span>
 							</div>
-						</button>
+						</div>
 					);
 				})}
 			</div>

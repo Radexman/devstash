@@ -1,4 +1,4 @@
-# Current Feature
+# Current Feature: Item → Collections Assignment
 
 ## Status
 
@@ -6,7 +6,19 @@ Not Started
 
 ## Goals
 
+- Let users assign an item to zero, one, or many collections from the new item form
+- Let users update an item's collection memberships from the edit form in the item drawer
+- Persist membership through the existing `ItemCollection` join table
+- Show the user's available collections in a multi-select input within both forms
+
 ## Notes
+
+- Scope is limited to the forms — collection detail/list pages are out of scope for this feature
+- Collections shown must be user-scoped (only the signed-in user's collections)
+- Both `createItem` and `updateItem` server actions + their Zod schemas need to accept a `collectionIds: string[]` field
+- Queries: `createItem` should `connect` via the `collections` (`ItemCollection`) relation; `updateItem` should reconcile additions/removals safely
+- `getItemDetail` should return the item's current `collectionIds` so the edit form can pre-populate
+- Add Vitest coverage for the new action paths (empty set, one, many, ownership check that collections belong to the user)
 
 ## History
 

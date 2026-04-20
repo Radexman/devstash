@@ -5,6 +5,8 @@ export interface ItemWithType {
   title: string;
   description: string | null;
   contentType: string;
+  content: string | null;
+  url: string | null;
   isFavorite: boolean;
   isPinned: boolean;
   createdAt: Date;
