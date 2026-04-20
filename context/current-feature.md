@@ -1,12 +1,24 @@
-# Current Feature
+# Current Feature: Collections Pages
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Create `/collections` page that lists all of the user's collections
+- Create `/collections/[id]` dynamic page that shows the items in a single collection
+- Reuse existing cards (CollectionCard for the grid, ItemCard for items inside a collection)
+- Link "View all collections" in the sidebar to `/collections`
+- Link each collection card to its corresponding `/collections/[id]` page
+
 ## Notes
+
+- Both routes must be protected by the auth proxy (match existing `/dashboard/*` and `/items/*` patterns)
+- Use the shared dashboard shell layout (sidebar + main) used by `/items/[type]`
+- Prisma queries should be user-scoped and live alongside existing helpers in `src/lib/db/collections.ts`
+- Collection detail page should handle the not-found / not-owned case (return `notFound()`)
+- Keep styling consistent: dominant-type border color on the collection grid, existing ItemCard grid (1/2/3 col responsive)
 
 ## History
 
