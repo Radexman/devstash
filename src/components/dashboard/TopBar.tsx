@@ -1,7 +1,6 @@
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { NewItemDialog } from '@/components/items/NewItemDialog';
 import { NewCollectionDialog } from '@/components/collections/NewCollectionDialog';
+import { SearchTrigger } from '@/components/search/SearchTrigger';
 
 export function TopBar() {
 	return (
@@ -13,12 +12,8 @@ export function TopBar() {
 				<span>DevStash</span>
 			</div>
 
-			<div className="relative w-full max-w-md">
-				<Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-				<Input
-					placeholder="Search items..."
-					className="pl-9"
-				/>
+			<div className="w-full max-w-md px-4">
+				<SearchTrigger />
 			</div>
 
 			<div className="flex items-center gap-2">
