@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import type { ItemWithType } from '@/lib/db/items';
 
 export interface SidebarCollection {
   id: string;
@@ -155,6 +156,121 @@ export async function getCollectionsForDashboard(userId: string): Promise<Collec
       updatedAt: collection.updatedAt,
     };
   });
+}
+
+export async function getAllCollectionsForUser(userId: string): Promise<CollectionWithMeta[]> {
+  const collections = await prisma.collection.findMany({
+    where: { userId },
+    orderBy: [{ isFavorite: 'desc' }, { updatedAt: 'desc' }],
+    include: {
+      items: {
+        include: {
+          item: {
+            include: {
+              itemType: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return collections.map((collection) => {
+    const itemTypes = collection.items.map((ic) => ic.item.itemType);
+
+    const typeCounts = new Map<string, { count: number; icon: string; color: string }>();
+    for (const type of itemTypes) {
+      const existing = typeCounts.get(type.id);
+      if (existing) {
+        existing.count++;
+      } else {
+        typeCounts.set(type.id, { count: 1, icon: type.icon, color: type.color });
+      }
+    }
+
+    let dominantColor: string | null = null;
+    let maxCount = 0;
+    for (const entry of typeCounts.values()) {
+      if (entry.count > maxCount) {
+        maxCount = entry.count;
+        dominantColor = entry.color;
+      }
+    }
+
+    const typeIcons = [...typeCounts.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4)
+      .map(({ icon, color }) => ({ icon, color }));
+
+    return {
+      id: collection.id,
+      name: collection.name,
+      description: collection.description,
+      isFavorite: collection.isFavorite,
+      itemCount: collection.items.length,
+      dominantColor,
+      typeIcons,
+      createdAt: collection.createdAt,
+      updatedAt: collection.updatedAt,
+    };
+  });
+}
+
+export interface CollectionDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  isFavorite: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  items: ItemWithType[];
+}
+
+export async function getCollectionDetail(
+  collectionId: string,
+  userId: string,
+): Promise<CollectionDetail | null> {
+  const collection = await prisma.collection.findFirst({
+    where: { id: collectionId, userId },
+    include: {
+      items: {
+        orderBy: { item: { updatedAt: 'desc' } },
+        include: {
+          item: {
+            include: {
+              itemType: { select: { name: true, icon: true, color: true } },
+              tags: { select: { id: true, name: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!collection) return null;
+
+  return {
+    id: collection.id,
+    name: collection.name,
+    description: collection.description,
+    isFavorite: collection.isFavorite,
+    createdAt: collection.createdAt,
+    updatedAt: collection.updatedAt,
+    items: collection.items.map((ic) => ({
+      id: ic.item.id,
+      title: ic.item.title,
+      description: ic.item.description,
+      contentType: ic.item.contentType,
+      content: ic.item.content,
+      url: ic.item.url,
+      isFavorite: ic.item.isFavorite,
+      isPinned: ic.item.isPinned,
+      createdAt: ic.item.createdAt,
+      updatedAt: ic.item.updatedAt,
+      itemType: ic.item.itemType,
+      tags: ic.item.tags,
+    })),
+  };
 }
 
 export interface CollectionSummary {
