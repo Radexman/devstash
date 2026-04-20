@@ -1,24 +1,12 @@
-# Current Feature: Collections Pages
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create `/collections` page that lists all of the user's collections
-- Create `/collections/[id]` dynamic page that shows the items in a single collection
-- Reuse existing cards (CollectionCard for the grid, ItemCard for items inside a collection)
-- Link "View all collections" in the sidebar to `/collections`
-- Link each collection card to its corresponding `/collections/[id]` page
-
 ## Notes
-
-- Both routes must be protected by the auth proxy (match existing `/dashboard/*` and `/items/*` patterns)
-- Use the shared dashboard shell layout (sidebar + main) used by `/items/[type]`
-- Prisma queries should be user-scoped and live alongside existing helpers in `src/lib/db/collections.ts`
-- Collection detail page should handle the not-found / not-owned case (return `notFound()`)
-- Keep styling consistent: dominant-type border color on the collection grid, existing ItemCard grid (1/2/3 col responsive)
 
 ## History
 
@@ -52,3 +40,4 @@ In Progress
 - 2026-04-19: Remove File/Image Types — Dropped File and Image system types, removed fileUrl/fileName/fileSize columns from Item (prisma migration), trimmed seed, iconMap, TYPE_LABELS, sidebar PRO gating, and ItemDrawer file viewer. Updated project-overview, item-types, item-crud-architecture docs to reflect the 5-type system (snippet, prompt, command, note, link).
 - 2026-04-20: Collection Create — New createCollection query in src/lib/db/collections.ts (user-scoped via user.connect, returns CollectionSummary) and createCollection server action with Zod validation (name required, description trimmed/nullable), new NewCollectionDialog client component replacing TopBar placeholder button, toast + close + form reset + router.refresh() on success, Vitest coverage for unauthorized/empty name/success/description trim/query throw.
 - 2026-04-20: Item → Collections Assignment — New getUserCollections / getUserCollectionIds queries (user-scoped, alphabetical), auth-checked GET /api/collections route, CollectionMultiSelect client component (fetches on mount, Badge-chip toggle UI) wired into NewItemDialog and ItemDrawer edit form with pre-population from item.collections. createItem/updateItem actions + queries accept collectionIds with ownership validation (foreign ids silently dropped); createItem uses nested ItemCollection writes, updateItem reconciles via $transaction (deleteMany + createMany). Vitest coverage for default-empty, owned pass-through, and foreign-id filtering on both actions.
+- 2026-04-20: Collections Pages — New /collections index (getAllCollectionsForUser, favorites first then updatedAt desc) and /collections/[id] detail (getCollectionDetail, user-scoped with notFound on miss) using shared dashboard shell layout. Extracted CollectionCard component from CollectionsSection, wrapped in Link to /collections/[id], reused on dashboard. Items in collection detail rendered via existing ItemCard in 1/2/3-col responsive grid. Proxy matcher + protected prefix extended to /collections/*.
