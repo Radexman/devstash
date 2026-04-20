@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { ItemWithType } from '@/lib/db/items';
+import { DASHBOARD_COLLECTIONS_LIMIT } from '@/lib/pagination';
 
 export interface SidebarCollection {
   id: string;
@@ -100,7 +101,7 @@ export async function getCollectionsForDashboard(userId: string): Promise<Collec
   const collections = await prisma.collection.findMany({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
-    take: 6,
+    take: DASHBOARD_COLLECTIONS_LIMIT,
     include: {
       items: {
         include: {
@@ -216,7 +217,7 @@ export async function getAllCollectionsForUser(userId: string): Promise<Collecti
   });
 }
 
-export interface CollectionDetail {
+export interface CollectionDetailPage {
   id: string;
   name: string;
   description: string | null;
@@ -224,52 +225,61 @@ export interface CollectionDetail {
   createdAt: Date;
   updatedAt: Date;
   items: ItemWithType[];
+  total: number;
 }
 
-export async function getCollectionDetail(
+export async function getCollectionDetailPage(
   collectionId: string,
   userId: string,
-): Promise<CollectionDetail | null> {
+  skip: number,
+  take: number,
+): Promise<CollectionDetailPage | null> {
   const collection = await prisma.collection.findFirst({
     where: { id: collectionId, userId },
-    include: {
-      items: {
-        orderBy: { item: { updatedAt: 'desc' } },
-        include: {
-          item: {
-            include: {
-              itemType: { select: { name: true, icon: true, color: true } },
-              tags: { select: { id: true, name: true } },
-            },
-          },
-        },
-      },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      isFavorite: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 
   if (!collection) return null;
 
+  const [rows, total] = await Promise.all([
+    prisma.itemCollection.findMany({
+      where: { collectionId },
+      orderBy: { item: { updatedAt: 'desc' } },
+      skip,
+      take,
+      select: {
+        item: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            contentType: true,
+            content: true,
+            url: true,
+            isFavorite: true,
+            isPinned: true,
+            createdAt: true,
+            updatedAt: true,
+            itemType: { select: { name: true, icon: true, color: true } },
+            tags: { select: { id: true, name: true } },
+          },
+        },
+      },
+    }),
+    prisma.itemCollection.count({ where: { collectionId } }),
+  ]);
+
   return {
-    id: collection.id,
-    name: collection.name,
-    description: collection.description,
-    isFavorite: collection.isFavorite,
-    createdAt: collection.createdAt,
-    updatedAt: collection.updatedAt,
-    items: collection.items.map((ic) => ({
-      id: ic.item.id,
-      title: ic.item.title,
-      description: ic.item.description,
-      contentType: ic.item.contentType,
-      content: ic.item.content,
-      url: ic.item.url,
-      isFavorite: ic.item.isFavorite,
-      isPinned: ic.item.isPinned,
-      createdAt: ic.item.createdAt,
-      updatedAt: ic.item.updatedAt,
-      itemType: ic.item.itemType,
-      tags: ic.item.tags,
-    })),
+    ...collection,
+    items: rows.map((r) => r.item),
+    total,
   };
 }
 

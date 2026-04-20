@@ -1,12 +1,25 @@
-# Current Feature
+# Current Feature: Pagination
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add pagination to `/items/[type]` with numbered page links and prev/next controls
+- Add pagination to `/collections/[id]` with numbered page links and prev/next controls
+- Disable (grey out) prev/next when at the first/last page
+- Introduce constants: `ITEMS_PER_PAGE = 21`, `COLLECTIONS_PER_PAGE = 21`
+- Introduce dashboard limits: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
+- Only fetch the page's worth of rows from the database — never fetch all items/collections at once
+
 ## Notes
+
+- Pagination controls render at the bottom of each list page
+- Page number likely driven by `?page=` search param on the listing routes
+- Items per page on listings: 21 (fits 3-col grid nicely); dashboard uses smaller limits
+- Queries must accept skip/take (or equivalent) and also return a total count for page math
+- Apply the `DASHBOARD_*` limits to the existing dashboard queries/sections so they stay bounded
 
 ## History
 

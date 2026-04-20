@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { DASHBOARD_RECENT_ITEMS_LIMIT } from '@/lib/pagination';
 
 export interface ItemWithType {
   id: string;
@@ -30,28 +31,44 @@ export async function getPinnedItems(userId: string): Promise<ItemWithType[]> {
   });
 }
 
-export async function getItemsByType(
+export interface PaginatedItemsByType {
+  items: ItemWithType[];
+  total: number;
+}
+
+export async function getItemsByTypePage(
   userId: string,
   typeName: string,
-): Promise<ItemWithType[]> {
-  return prisma.item.findMany({
-    where: {
-      userId,
-      itemType: { is: { name: { equals: typeName, mode: 'insensitive' } } },
-    },
-    orderBy: { updatedAt: 'desc' },
-    include: {
-      itemType: { select: { name: true, icon: true, color: true } },
-      tags: { select: { id: true, name: true } },
-    },
-  });
+  skip: number,
+  take: number,
+): Promise<PaginatedItemsByType> {
+  const where = {
+    userId,
+    itemType: { is: { name: { equals: typeName, mode: 'insensitive' as const } } },
+  };
+
+  const [items, total] = await Promise.all([
+    prisma.item.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },
+      skip,
+      take,
+      include: {
+        itemType: { select: { name: true, icon: true, color: true } },
+        tags: { select: { id: true, name: true } },
+      },
+    }),
+    prisma.item.count({ where }),
+  ]);
+
+  return { items, total };
 }
 
 export async function getRecentItems(userId: string): Promise<ItemWithType[]> {
   return prisma.item.findMany({
     where: { userId },
     orderBy: { updatedAt: 'desc' },
-    take: 10,
+    take: DASHBOARD_RECENT_ITEMS_LIMIT,
     include: {
       itemType: { select: { name: true, icon: true, color: true } },
       tags: { select: { id: true, name: true } },
