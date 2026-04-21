@@ -1,12 +1,25 @@
-# Current Feature
+# Current Feature: Favorites Page Client-Side Sorting
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add client-side sorting controls to the /favorites page
+- Support sorting by name (alphabetical)
+- Support sorting by date (updatedAt)
+- Support sorting by item type (for the items section)
+- Sorting should happen on the client (no server round-trip)
+
 ## Notes
+
+- The /favorites page currently renders two sections: favorited items and favorited collections, both sorted by updatedAt desc on the server (src/lib/db/favorites.ts getFavorites).
+- Convert the list rendering to a client component that accepts the fetched data and holds sort state.
+- Sort options: name (asc), date (desc by updatedAt, the current default), type (items only — group/sort by item type name).
+- The type sort only makes sense for the items section; for collections, fall back to name/date only or hide the type option in that section.
+- Keep the existing empty state behavior and section counts.
+- Consider a simple shadcn-style Select or segmented buttons for the sort control — match the compact monospace vibe of the existing list.
 
 ## History
 
