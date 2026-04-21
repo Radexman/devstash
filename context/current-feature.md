@@ -1,12 +1,27 @@
-# Current Feature
+# Current Feature: Favorites Page
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add a star icon button to the TopBar that links to `/favorites`
+- Create a protected `/favorites` route (proxy prefix + matcher)
+- Fetch all user-favorited items and collections
+- Render a compact, dev-focused list view (VS Code/terminal style, not cards)
+- Each row shows: type icon, title, type badge, date added
+- Separate sections for items and collections, each with a count
+- Clicking an item opens the existing `ItemDrawer`; clicking a collection navigates to `/collections/[id]`
+- Show an empty state when the user has no favorites
+- Sort favorites by most recently favorited (`updatedAt` desc)
+
 ## Notes
+
+- UI style: monospace or semi-monospace font, minimal padding, high density, subtle hover states, no cards or heavy borders — clean lines only
+- Reuse existing shared pieces where possible: dashboard shell layout, `iconMap`, `formatDate`, `ItemDrawer`, collection link pattern
+- Follow the existing protected-route pattern used by `/settings`, `/collections`, `/items/*` (update `proxy.ts` matcher + protected prefix list)
+- Add Vitest coverage for any new server-side query/util under `src/lib/` or `src/actions/`
 
 ## History
 

@@ -1,6 +1,9 @@
+import Link from 'next/link';
+import { Star } from 'lucide-react';
 import { NewItemDialog } from '@/components/items/NewItemDialog';
 import { NewCollectionDialog } from '@/components/collections/NewCollectionDialog';
 import { SearchTrigger } from '@/components/search/SearchTrigger';
+import { Button } from '@/components/ui/button';
 
 export function TopBar() {
 	return (
@@ -17,6 +20,14 @@ export function TopBar() {
 			</div>
 
 			<div className="flex items-center gap-2">
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label="Favorites"
+					render={<Link href="/favorites" />}
+				>
+					<Star className="h-4 w-4" />
+				</Button>
 				<NewCollectionDialog />
 				<NewItemDialog />
 			</div>
