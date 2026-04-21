@@ -10,6 +10,8 @@ import {
 	ChevronRight,
 	LogOut,
 	PanelLeft,
+	Settings,
+	User as UserIcon,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -203,7 +205,14 @@ function SidebarContent({
 							<DropdownMenuItem
 								render={<Link href="/profile" />}
 							>
+								<UserIcon className="mr-2 h-4 w-4" />
 								Profile
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								render={<Link href="/settings" />}
+							>
+								<Settings className="mr-2 h-4 w-4" />
+								Settings
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
 								<LogOut className="mr-2 h-4 w-4" />
@@ -228,7 +237,14 @@ function SidebarContent({
 							<DropdownMenuItem
 								render={<Link href="/profile" />}
 							>
+								<UserIcon className="mr-2 h-4 w-4" />
 								Profile
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								render={<Link href="/settings" />}
+							>
+								<Settings className="mr-2 h-4 w-4" />
+								Settings
 							</DropdownMenuItem>
 							<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
 								<LogOut className="mr-2 h-4 w-4" />

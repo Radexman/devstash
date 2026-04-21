@@ -1,4 +1,4 @@
-# Current Feature: Pagination
+# Current Feature: Settings Page
 
 ## Status
 
@@ -6,20 +6,17 @@ In Progress
 
 ## Goals
 
-- Add pagination to `/items/[type]` with numbered page links and prev/next controls
-- Add pagination to `/collections/[id]` with numbered page links and prev/next controls
-- Disable (grey out) prev/next when at the first/last page
-- Introduce constants: `ITEMS_PER_PAGE = 21`, `COLLECTIONS_PER_PAGE = 21`
-- Introduce dashboard limits: `DASHBOARD_COLLECTIONS_LIMIT = 6`, `DASHBOARD_RECENT_ITEMS_LIMIT = 10`
-- Only fetch the page's worth of rows from the database — never fetch all items/collections at once
+- Create a new `/settings` route, protected by the proxy like the other authenticated pages
+- Add a "Settings" link to the user avatar dropdown at the bottom of the sidebar
+- Move "Account" actions off the profile page onto the new settings page — specifically the change-password form and the delete-account flow
+- Profile page retains identity/usage info only; settings page owns account-level actions
 
 ## Notes
 
-- Pagination controls render at the bottom of each list page
-- Page number likely driven by `?page=` search param on the listing routes
-- Items per page on listings: 21 (fits 3-col grid nicely); dashboard uses smaller limits
-- Queries must accept skip/take (or equivalent) and also return a total count for page math
-- Apply the `DASHBOARD_*` limits to the existing dashboard queries/sections so they stay bounded
+- "Forgot password" in the request appears to refer to the existing password-change form on the profile page (profile has a "change password form (credentials users only)", not a true forgot-password flow — the forgot-password flow lives at `/forgot-password` and is only used when signed out). Treating it as "change password" on the move.
+- Protection: extend the proxy matcher + protected prefix list so `/settings/*` requires auth, matching the pattern already used for `/profile` and `/collections/*`.
+- Sidebar entry point: dropdown on the user avatar at the bottom of the sidebar (next to Sign Out).
+- Keep the existing components when moving — don't rewrite the change-password form or delete-account dialog, just relocate them.
 
 ## History
 
@@ -56,3 +53,4 @@ In Progress
 - 2026-04-20: Collections Pages — New /collections index (getAllCollectionsForUser, favorites first then updatedAt desc) and /collections/[id] detail (getCollectionDetail, user-scoped with notFound on miss) using shared dashboard shell layout. Extracted CollectionCard component from CollectionsSection, wrapped in Link to /collections/[id], reused on dashboard. Items in collection detail rendered via existing ItemCard in 1/2/3-col responsive grid. Proxy matcher + protected prefix extended to /collections/*.
 - 2026-04-20: Collection Edit/Delete/Favorite Actions — New updateCollection + deleteCollection queries and server actions (Zod + ownership checks). Reusable EditCollectionDialog + DeleteCollectionDialog. CollectionCardMenu adds a 3-dots dropdown (Edit/Favorite/Delete) to cards with preventDefault/stopPropagation so the card Link still navigates on non-trigger clicks. CollectionDetailActions puts Favorite/Edit/Delete icon buttons on /collections/[id]; delete redirects to /collections. Items are preserved on collection delete (Prisma cascades ItemCollection only). Favorite is a placeholder toast. Vitest coverage for both new actions.
 - 2026-04-20: Global Search / Command Palette — Cmd+K/Ctrl+K opens a shadcn cmdk palette with fuzzy client-side search. New getSearchData query (items + collections, user-scoped) and auth-checked /api/search route. CommandPaletteProvider prefetches on mount and open, registers the global hotkey; CommandPalette groups results (items show type icon + preview, collections show item count), selects open the item drawer or navigate to /collections/[id]. SearchTrigger replaces the TopBar input with a button showing the ⌘K/Ctrl+K hint. Fixed shadcn CommandDialog to wrap children in <Command> so CommandInput has cmdk context. Vitest coverage for getSearchData preview precedence and truncation.
+- 2026-04-20: Pagination — New src/lib/pagination.ts with ITEMS_PER_PAGE/COLLECTIONS_PER_PAGE (21) + DASHBOARD_COLLECTIONS_LIMIT (6) / DASHBOARD_RECENT_ITEMS_LIMIT (10) and parsePageParam/clampPage/getPageCount helpers. Replaced getItemsByType with getItemsByTypePage(skip, take) → {items, total} and getCollectionDetail with getCollectionDetailPage (paginates ItemCollection with parallel count). New server-safe shadcn-style Pagination component with windowed page numbers and greyed-out prev/next at bounds. /items/[type] and /collections/[id] now read ?page=, fetch only the slice, clamp out-of-range. Dashboard queries (getRecentItems, getCollectionsForDashboard) bound by the new constants. Vitest coverage for pagination helpers and both paginated queries.
