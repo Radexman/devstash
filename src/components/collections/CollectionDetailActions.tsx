@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Pencil, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog';
 import { DeleteCollectionDialog } from '@/components/collections/DeleteCollectionDialog';
+import { toggleCollectionFavorite } from '@/actions/collections';
 
 interface CollectionDetailActionsProps {
   collection: {
@@ -19,8 +21,27 @@ interface CollectionDetailActionsProps {
 export function CollectionDetailActions({
   collection,
 }: CollectionDetailActionsProps) {
+  const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(collection.isFavorite);
+  const [favoriting, setFavoriting] = useState(false);
+
+  const handleToggleFavorite = async () => {
+    if (favoriting) return;
+    const previous = isFavorite;
+    setIsFavorite(!previous);
+    setFavoriting(true);
+    const result = await toggleCollectionFavorite(collection.id);
+    setFavoriting(false);
+    if (!result.success) {
+      setIsFavorite(previous);
+      toast.error(result.error);
+      return;
+    }
+    setIsFavorite(result.data.isFavorite);
+    router.refresh();
+  };
 
   return (
     <>
@@ -29,11 +50,12 @@ export function CollectionDetailActions({
           variant="ghost"
           size="icon"
           aria-label="Toggle favorite"
-          onClick={() => toast('Favorites coming soon')}
+          onClick={handleToggleFavorite}
+          disabled={favoriting}
         >
           <Star
             className={
-              collection.isFavorite
+              isFavorite
                 ? 'h-4 w-4 fill-yellow-500 text-yellow-500'
                 : 'h-4 w-4'
             }

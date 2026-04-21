@@ -249,6 +249,24 @@ export async function deleteItem(
   return result.count > 0;
 }
 
+export async function toggleItemFavorite(
+  itemId: string,
+  userId: string,
+): Promise<{ isFavorite: boolean } | null> {
+  const existing = await prisma.item.findFirst({
+    where: { id: itemId, userId },
+    select: { isFavorite: true },
+  });
+  if (!existing) return null;
+
+  const next = !existing.isFavorite;
+  await prisma.item.update({
+    where: { id: itemId },
+    data: { isFavorite: next },
+  });
+  return { isFavorite: next };
+}
+
 export interface DashboardStats {
   totalItems: number;
   totalCollections: number;

@@ -29,6 +29,7 @@ export function CollectionCard({ collection }: CollectionCardProps) {
 							id: collection.id,
 							name: collection.name,
 							description: collection.description,
+							isFavorite: collection.isFavorite,
 						}}
 					/>
 				</div>

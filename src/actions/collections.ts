@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import {
   createCollection as createCollectionQuery,
   deleteCollection as deleteCollectionQuery,
+  toggleCollectionFavorite as toggleCollectionFavoriteQuery,
   updateCollection as updateCollectionQuery,
   type CollectionSummary,
 } from '@/lib/db/collections';
@@ -93,5 +94,30 @@ export async function deleteCollection(
     return { success: true, data: { id: collectionId } };
   } catch {
     return { success: false, error: 'Failed to delete collection' };
+  }
+}
+
+export async function toggleCollectionFavorite(
+  collectionId: string,
+): Promise<ActionResult<{ id: string; isFavorite: boolean }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    const result = await toggleCollectionFavoriteQuery(
+      collectionId,
+      session.user.id,
+    );
+    if (!result) {
+      return { success: false, error: 'Collection not found' };
+    }
+    return {
+      success: true,
+      data: { id: collectionId, isFavorite: result.isFavorite },
+    };
+  } catch {
+    return { success: false, error: 'Failed to update favorite' };
   }
 }
