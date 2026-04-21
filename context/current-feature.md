@@ -1,25 +1,12 @@
-# Current Feature: Favorites Page Client-Side Sorting
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add client-side sorting controls to the /favorites page
-- Support sorting by name (alphabetical)
-- Support sorting by date (updatedAt)
-- Support sorting by item type (for the items section)
-- Sorting should happen on the client (no server round-trip)
-
 ## Notes
-
-- The /favorites page currently renders two sections: favorited items and favorited collections, both sorted by updatedAt desc on the server (src/lib/db/favorites.ts getFavorites).
-- Convert the list rendering to a client component that accepts the fetched data and holds sort state.
-- Sort options: name (asc), date (desc by updatedAt, the current default), type (items only — group/sort by item type name).
-- The type sort only makes sense for the items section; for collections, fall back to name/date only or hide the type option in that section.
-- Keep the existing empty state behavior and section counts.
-- Consider a simple shadcn-style Select or segmented buttons for the sort control — match the compact monospace vibe of the existing list.
 
 ## History
 
@@ -61,3 +48,4 @@ In Progress
 - 2026-04-21: Editor Preferences — New User.editorPreferences JSON column (migration 20260421105822_add_editor_preferences), src/lib/editor-preferences.ts with defaults + Zod schema + normalize helper, getEditorPreferences/updateEditorPreferences db helpers, auth-checked updateEditorPreferences server action, EditorPreferencesProvider (optimistic update + rollback + success toast) fed by a server EditorPreferencesLoader mounted in the dashboard/items/collections layouts and settings page. New Editor Preferences card on /settings with auto-save font size, tab size, theme selects and word wrap / minimap switches (shadcn-style Select + Switch built on base-ui). CodeEditor consumes context for fontSize/tabSize/wordWrap/minimap/theme; custom monokai and github-dark themes registered via beforeMount and title bar background matches the active theme. Vitest coverage for normalizeEditorPreferences and the server action (auth, invalid font size, unknown theme, success, default payload, query throw).
 - 2026-04-21: Favorites Page — New protected /favorites route (proxy prefix + matcher extended) showing a compact, monospace list of user-favorited items and collections in separate sections with counts. New src/lib/db/favorites.ts getFavorites query (user-scoped, both sets sorted by updatedAt desc, collection itemCount via _count). FavoriteItemRow opens the existing ItemDrawer on click; FavoriteCollectionRow links to /collections/[id]. Star icon button in TopBar links to /favorites. Empty state when no favorites. Vitest coverage for scoping, shape mapping, and empty case.
 - 2026-04-21: Favorite Toggle — New toggleItemFavorite / toggleCollectionFavorite db helpers (ownership-scoped findFirst + update) and matching server actions returning { id, isFavorite }. Wired real handlers into the ItemDrawer star button (previously disabled), CollectionDetailActions and CollectionCardMenu (previously placeholder toasts), and added a hover-revealed star button on ItemCard that stays visible when favorited. All client callers use optimistic local state with rollback-on-failure toast and router.refresh() so sidebar favorites, /favorites, and dashboard stay in sync. CollectionCardMenu now takes isFavorite and swaps label between Favorite/Unfavorite. Vitest coverage for both new actions (unauthorized, not-found, toggle on/off, query throw).
+- 2026-04-21: Favorites Page Client-Side Sorting — Extracted favorites list rendering into a new client component FavoritesList.tsx that holds sort state (date/name/type) and re-sorts items + collections with useMemo. shadcn-style Select in the top-right with ArrowUpDown icon + "Sort" label, compact h-8 trigger. Items sort by itemType.name then title in type mode; collections fall back to name in type mode (no type to sort by). Server page.tsx still handles auth, getFavorites, header and empty state.
