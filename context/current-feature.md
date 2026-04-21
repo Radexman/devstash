@@ -1,27 +1,12 @@
-# Current Feature: Favorites Page
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add a star icon button to the TopBar that links to `/favorites`
-- Create a protected `/favorites` route (proxy prefix + matcher)
-- Fetch all user-favorited items and collections
-- Render a compact, dev-focused list view (VS Code/terminal style, not cards)
-- Each row shows: type icon, title, type badge, date added
-- Separate sections for items and collections, each with a count
-- Clicking an item opens the existing `ItemDrawer`; clicking a collection navigates to `/collections/[id]`
-- Show an empty state when the user has no favorites
-- Sort favorites by most recently favorited (`updatedAt` desc)
-
 ## Notes
-
-- UI style: monospace or semi-monospace font, minimal padding, high density, subtle hover states, no cards or heavy borders — clean lines only
-- Reuse existing shared pieces where possible: dashboard shell layout, `iconMap`, `formatDate`, `ItemDrawer`, collection link pattern
-- Follow the existing protected-route pattern used by `/settings`, `/collections`, `/items/*` (update `proxy.ts` matcher + protected prefix list)
-- Add Vitest coverage for any new server-side query/util under `src/lib/` or `src/actions/`
 
 ## History
 
@@ -61,3 +46,4 @@ In Progress
 - 2026-04-20: Pagination — New src/lib/pagination.ts with ITEMS_PER_PAGE/COLLECTIONS_PER_PAGE (21) + DASHBOARD_COLLECTIONS_LIMIT (6) / DASHBOARD_RECENT_ITEMS_LIMIT (10) and parsePageParam/clampPage/getPageCount helpers. Replaced getItemsByType with getItemsByTypePage(skip, take) → {items, total} and getCollectionDetail with getCollectionDetailPage (paginates ItemCollection with parallel count). New server-safe shadcn-style Pagination component with windowed page numbers and greyed-out prev/next at bounds. /items/[type] and /collections/[id] now read ?page=, fetch only the slice, clamp out-of-range. Dashboard queries (getRecentItems, getCollectionsForDashboard) bound by the new constants. Vitest coverage for pagination helpers and both paginated queries.
 - 2026-04-21: Settings Page — New protected /settings route (proxy prefix + matcher extended) that hosts the Account actions previously on /profile: change-password form (credentials users only) and delete-account danger zone, reusing ChangePasswordForm and DeleteAccountButton unchanged. Profile page trimmed to identity + usage stats only. Sidebar user dropdown (collapsed and expanded) gains a "Settings" link alongside Profile/Sign out, with matching lucide icons.
 - 2026-04-21: Editor Preferences — New User.editorPreferences JSON column (migration 20260421105822_add_editor_preferences), src/lib/editor-preferences.ts with defaults + Zod schema + normalize helper, getEditorPreferences/updateEditorPreferences db helpers, auth-checked updateEditorPreferences server action, EditorPreferencesProvider (optimistic update + rollback + success toast) fed by a server EditorPreferencesLoader mounted in the dashboard/items/collections layouts and settings page. New Editor Preferences card on /settings with auto-save font size, tab size, theme selects and word wrap / minimap switches (shadcn-style Select + Switch built on base-ui). CodeEditor consumes context for fontSize/tabSize/wordWrap/minimap/theme; custom monokai and github-dark themes registered via beforeMount and title bar background matches the active theme. Vitest coverage for normalizeEditorPreferences and the server action (auth, invalid font size, unknown theme, success, default payload, query throw).
+- 2026-04-21: Favorites Page — New protected /favorites route (proxy prefix + matcher extended) showing a compact, monospace list of user-favorited items and collections in separate sections with counts. New src/lib/db/favorites.ts getFavorites query (user-scoped, both sets sorted by updatedAt desc, collection itemCount via _count). FavoriteItemRow opens the existing ItemDrawer on click; FavoriteCollectionRow links to /collections/[id]. Star icon button in TopBar links to /favorites. Empty state when no favorites. Vitest coverage for scoping, shape mapping, and empty case.
