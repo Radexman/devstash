@@ -1,12 +1,30 @@
-# Current Feature
+# Current Feature: Favorite Toggle
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Wire up a working favorite toggle for items in the ItemDrawer action bar (currently non-functional) so `Item.isFavorite` flips in the DB and reflects in the UI.
+- Wire up a working favorite toggle on the collection detail page (`/collections/[id]`) Favorite button (currently a placeholder toast) so `Collection.isFavorite` persists.
+- Wire up a working favorite toggle on the CollectionCard 3-dots dropdown (currently a placeholder toast).
+- Add a favorite toggle affordance on ItemCard (so users can favorite items without opening the drawer).
+- Ensure the toggle state is visually reflected everywhere (filled vs outline star/heart icon) and that affected pages refresh (sidebar favorite collections, /favorites page, dashboard).
+
 ## Notes
+
+- Data model already supports this: `Item.isFavorite` and `Collection.isFavorite` are booleans with default `false`. No migration needed.
+- Existing scaffolding to reuse/replace:
+  - ItemDrawer action bar already has a favorite icon button — needs a real handler.
+  - CollectionDetailActions and CollectionCardMenu both have Favorite buttons wired to a placeholder toast (see 2026-04-20 history entry).
+  - Sidebar favorite collections and `/favorites` page already read from `isFavorite` — they will light up automatically once writes work.
+- Implementation plan:
+  - New `toggleItemFavorite(itemId)` and `toggleCollectionFavorite(collectionId)` server actions with auth + ownership checks; both return `{ success, isFavorite }` and call `revalidatePath` as needed.
+  - New query helpers in `src/lib/db/items.ts` and `src/lib/db/collections.ts` (ownership-scoped `updateMany` to flip the boolean).
+  - Client components call the action, optimistically update local state, rollback + toast on failure.
+- Prevent the CollectionCard Link from navigating when the favorite control is clicked (same pattern as the existing CollectionCardMenu — `preventDefault` / `stopPropagation`). Same pattern for ItemCard favorite control vs drawer-open click.
+- Vitest coverage for both new server actions: unauthorized, not-found / foreign ownership, success (toggles off and on), query throw.
 
 ## History
 

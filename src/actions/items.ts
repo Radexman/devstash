@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import {
   createItem as createItemQuery,
   deleteItem as deleteItemQuery,
+  toggleItemFavorite as toggleItemFavoriteQuery,
   updateItem as updateItemQuery,
   type ItemDetail,
 } from '@/lib/db/items';
@@ -206,5 +207,24 @@ export async function deleteItem(
     return { success: true, data: { id: itemId } };
   } catch {
     return { success: false, error: 'Failed to delete item' };
+  }
+}
+
+export async function toggleItemFavorite(
+  itemId: string,
+): Promise<ActionResult<{ id: string; isFavorite: boolean }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  try {
+    const result = await toggleItemFavoriteQuery(itemId, session.user.id);
+    if (!result) {
+      return { success: false, error: 'Item not found' };
+    }
+    return { success: true, data: { id: itemId, isFavorite: result.isFavorite } };
+  } catch {
+    return { success: false, error: 'Failed to update favorite' };
   }
 }

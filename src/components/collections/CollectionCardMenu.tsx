@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Pencil, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -11,22 +12,38 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog';
 import { DeleteCollectionDialog } from '@/components/collections/DeleteCollectionDialog';
+import { toggleCollectionFavorite } from '@/actions/collections';
 
 interface CollectionCardMenuProps {
   collection: {
     id: string;
     name: string;
     description: string | null;
+    isFavorite: boolean;
   };
 }
 
 export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
+  const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [favoriting, setFavoriting] = useState(false);
 
   const stop = (e: React.MouseEvent | React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+  };
+
+  const handleToggleFavorite = async () => {
+    if (favoriting) return;
+    setFavoriting(true);
+    const result = await toggleCollectionFavorite(collection.id);
+    setFavoriting(false);
+    if (!result.success) {
+      toast.error(result.error);
+      return;
+    }
+    router.refresh();
   };
 
   return (
@@ -56,13 +73,20 @@ export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
+            disabled={favoriting}
             onClick={(e) => {
               stop(e);
-              toast('Favorites coming soon');
+              void handleToggleFavorite();
             }}
           >
-            <Star className="mr-2 h-4 w-4" />
-            Favorite
+            <Star
+              className={
+                collection.isFavorite
+                  ? 'mr-2 h-4 w-4 fill-yellow-500 text-yellow-500'
+                  : 'mr-2 h-4 w-4'
+              }
+            />
+            {collection.isFavorite ? 'Unfavorite' : 'Favorite'}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={(e) => {

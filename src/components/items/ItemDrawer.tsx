@@ -27,7 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
-import { deleteItem, updateItem } from '@/actions/items';
+import { deleteItem, toggleItemFavorite, updateItem } from '@/actions/items';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
@@ -74,6 +74,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 	const [saving, setSaving] = useState(false);
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleting, setDeleting] = useState(false);
+	const [favoriting, setFavoriting] = useState(false);
 
 	useEffect(() => {
 		if (!itemId) {
@@ -174,6 +175,23 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 		router.refresh();
 	};
 
+	const handleToggleFavorite = async () => {
+		if (!item || favoriting) return;
+		const previous = item.isFavorite;
+		const optimistic = !previous;
+		setItem({ ...item, isFavorite: optimistic });
+		setFavoriting(true);
+		const result = await toggleItemFavorite(item.id);
+		setFavoriting(false);
+		if (!result.success) {
+			setItem({ ...item, isFavorite: previous });
+			toast.error(result.error);
+			return;
+		}
+		setItem({ ...item, isFavorite: result.data.isFavorite });
+		router.refresh();
+	};
+
 	const handleCopy = async () => {
 		if (!item) return;
 		const text = item.content ?? item.url ?? '';
@@ -252,7 +270,8 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 									variant="ghost"
 									size="icon-sm"
 									aria-label="Toggle favorite"
-									disabled
+									onClick={handleToggleFavorite}
+									disabled={favoriting}
 								>
 									<Star
 										className={
