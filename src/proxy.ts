@@ -12,6 +12,7 @@ export const proxy = auth((req) => {
   const isProtected =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/profile") ||
+    pathname.startsWith("/settings") ||
     pathname.startsWith("/items") ||
     pathname.startsWith("/collections");
 
@@ -36,6 +37,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/profile/:path*",
+    "/settings/:path*",
     "/items/:path*",
     "/collections/:path*",
   ],
