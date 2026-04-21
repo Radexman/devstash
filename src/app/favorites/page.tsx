@@ -2,8 +2,7 @@ import { redirect } from 'next/navigation';
 import { Star } from 'lucide-react';
 import { auth } from '@/auth';
 import { getFavorites } from '@/lib/db/favorites';
-import { FavoriteItemRow } from '@/components/favorites/FavoriteItemRow';
-import { FavoriteCollectionRow } from '@/components/favorites/FavoriteCollectionRow';
+import { FavoritesList } from '@/components/favorites/FavoritesList';
 
 export default async function FavoritesPage() {
 	const session = await auth();
@@ -38,48 +37,7 @@ export default async function FavoritesPage() {
 					</p>
 				</div>
 			) : (
-				<div className="space-y-8">
-					<section>
-						<h2 className="mb-2 flex items-baseline gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-							<span>Items</span>
-							<span className="text-muted-foreground/60">({items.length})</span>
-						</h2>
-						{items.length === 0 ? (
-							<p className="px-2 py-1.5 font-mono text-xs text-muted-foreground/60">
-								No favorited items.
-							</p>
-						) : (
-							<div className="border-t border-border/40">
-								{items.map((item) => (
-									<FavoriteItemRow key={item.id} item={item} />
-								))}
-							</div>
-						)}
-					</section>
-
-					<section>
-						<h2 className="mb-2 flex items-baseline gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-							<span>Collections</span>
-							<span className="text-muted-foreground/60">
-								({collections.length})
-							</span>
-						</h2>
-						{collections.length === 0 ? (
-							<p className="px-2 py-1.5 font-mono text-xs text-muted-foreground/60">
-								No favorited collections.
-							</p>
-						) : (
-							<div className="border-t border-border/40">
-								{collections.map((collection) => (
-									<FavoriteCollectionRow
-										key={collection.id}
-										collection={collection}
-									/>
-								))}
-							</div>
-						)}
-					</section>
-				</div>
+				<FavoritesList items={items} collections={collections} />
 			)}
 		</div>
 	);
