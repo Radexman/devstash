@@ -1,30 +1,12 @@
-# Current Feature: Favorite Toggle
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Wire up a working favorite toggle for items in the ItemDrawer action bar (currently non-functional) so `Item.isFavorite` flips in the DB and reflects in the UI.
-- Wire up a working favorite toggle on the collection detail page (`/collections/[id]`) Favorite button (currently a placeholder toast) so `Collection.isFavorite` persists.
-- Wire up a working favorite toggle on the CollectionCard 3-dots dropdown (currently a placeholder toast).
-- Add a favorite toggle affordance on ItemCard (so users can favorite items without opening the drawer).
-- Ensure the toggle state is visually reflected everywhere (filled vs outline star/heart icon) and that affected pages refresh (sidebar favorite collections, /favorites page, dashboard).
-
 ## Notes
-
-- Data model already supports this: `Item.isFavorite` and `Collection.isFavorite` are booleans with default `false`. No migration needed.
-- Existing scaffolding to reuse/replace:
-  - ItemDrawer action bar already has a favorite icon button — needs a real handler.
-  - CollectionDetailActions and CollectionCardMenu both have Favorite buttons wired to a placeholder toast (see 2026-04-20 history entry).
-  - Sidebar favorite collections and `/favorites` page already read from `isFavorite` — they will light up automatically once writes work.
-- Implementation plan:
-  - New `toggleItemFavorite(itemId)` and `toggleCollectionFavorite(collectionId)` server actions with auth + ownership checks; both return `{ success, isFavorite }` and call `revalidatePath` as needed.
-  - New query helpers in `src/lib/db/items.ts` and `src/lib/db/collections.ts` (ownership-scoped `updateMany` to flip the boolean).
-  - Client components call the action, optimistically update local state, rollback + toast on failure.
-- Prevent the CollectionCard Link from navigating when the favorite control is clicked (same pattern as the existing CollectionCardMenu — `preventDefault` / `stopPropagation`). Same pattern for ItemCard favorite control vs drawer-open click.
-- Vitest coverage for both new server actions: unauthorized, not-found / foreign ownership, success (toggles off and on), query throw.
 
 ## History
 
@@ -65,3 +47,4 @@ In Progress
 - 2026-04-21: Settings Page — New protected /settings route (proxy prefix + matcher extended) that hosts the Account actions previously on /profile: change-password form (credentials users only) and delete-account danger zone, reusing ChangePasswordForm and DeleteAccountButton unchanged. Profile page trimmed to identity + usage stats only. Sidebar user dropdown (collapsed and expanded) gains a "Settings" link alongside Profile/Sign out, with matching lucide icons.
 - 2026-04-21: Editor Preferences — New User.editorPreferences JSON column (migration 20260421105822_add_editor_preferences), src/lib/editor-preferences.ts with defaults + Zod schema + normalize helper, getEditorPreferences/updateEditorPreferences db helpers, auth-checked updateEditorPreferences server action, EditorPreferencesProvider (optimistic update + rollback + success toast) fed by a server EditorPreferencesLoader mounted in the dashboard/items/collections layouts and settings page. New Editor Preferences card on /settings with auto-save font size, tab size, theme selects and word wrap / minimap switches (shadcn-style Select + Switch built on base-ui). CodeEditor consumes context for fontSize/tabSize/wordWrap/minimap/theme; custom monokai and github-dark themes registered via beforeMount and title bar background matches the active theme. Vitest coverage for normalizeEditorPreferences and the server action (auth, invalid font size, unknown theme, success, default payload, query throw).
 - 2026-04-21: Favorites Page — New protected /favorites route (proxy prefix + matcher extended) showing a compact, monospace list of user-favorited items and collections in separate sections with counts. New src/lib/db/favorites.ts getFavorites query (user-scoped, both sets sorted by updatedAt desc, collection itemCount via _count). FavoriteItemRow opens the existing ItemDrawer on click; FavoriteCollectionRow links to /collections/[id]. Star icon button in TopBar links to /favorites. Empty state when no favorites. Vitest coverage for scoping, shape mapping, and empty case.
+- 2026-04-21: Favorite Toggle — New toggleItemFavorite / toggleCollectionFavorite db helpers (ownership-scoped findFirst + update) and matching server actions returning { id, isFavorite }. Wired real handlers into the ItemDrawer star button (previously disabled), CollectionDetailActions and CollectionCardMenu (previously placeholder toasts), and added a hover-revealed star button on ItemCard that stays visible when favorited. All client callers use optimistic local state with rollback-on-failure toast and router.refresh() so sidebar favorites, /favorites, and dashboard stay in sync. CollectionCardMenu now takes isFavorite and swaps label between Favorite/Unfavorite. Vitest coverage for both new actions (unauthorized, not-found, toggle on/off, query throw).
