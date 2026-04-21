@@ -1,22 +1,12 @@
-# Current Feature: Settings Page
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Create a new `/settings` route, protected by the proxy like the other authenticated pages
-- Add a "Settings" link to the user avatar dropdown at the bottom of the sidebar
-- Move "Account" actions off the profile page onto the new settings page — specifically the change-password form and the delete-account flow
-- Profile page retains identity/usage info only; settings page owns account-level actions
-
 ## Notes
-
-- "Forgot password" in the request appears to refer to the existing password-change form on the profile page (profile has a "change password form (credentials users only)", not a true forgot-password flow — the forgot-password flow lives at `/forgot-password` and is only used when signed out). Treating it as "change password" on the move.
-- Protection: extend the proxy matcher + protected prefix list so `/settings/*` requires auth, matching the pattern already used for `/profile` and `/collections/*`.
-- Sidebar entry point: dropdown on the user avatar at the bottom of the sidebar (next to Sign Out).
-- Keep the existing components when moving — don't rewrite the change-password form or delete-account dialog, just relocate them.
 
 ## History
 
@@ -54,3 +44,4 @@ In Progress
 - 2026-04-20: Collection Edit/Delete/Favorite Actions — New updateCollection + deleteCollection queries and server actions (Zod + ownership checks). Reusable EditCollectionDialog + DeleteCollectionDialog. CollectionCardMenu adds a 3-dots dropdown (Edit/Favorite/Delete) to cards with preventDefault/stopPropagation so the card Link still navigates on non-trigger clicks. CollectionDetailActions puts Favorite/Edit/Delete icon buttons on /collections/[id]; delete redirects to /collections. Items are preserved on collection delete (Prisma cascades ItemCollection only). Favorite is a placeholder toast. Vitest coverage for both new actions.
 - 2026-04-20: Global Search / Command Palette — Cmd+K/Ctrl+K opens a shadcn cmdk palette with fuzzy client-side search. New getSearchData query (items + collections, user-scoped) and auth-checked /api/search route. CommandPaletteProvider prefetches on mount and open, registers the global hotkey; CommandPalette groups results (items show type icon + preview, collections show item count), selects open the item drawer or navigate to /collections/[id]. SearchTrigger replaces the TopBar input with a button showing the ⌘K/Ctrl+K hint. Fixed shadcn CommandDialog to wrap children in <Command> so CommandInput has cmdk context. Vitest coverage for getSearchData preview precedence and truncation.
 - 2026-04-20: Pagination — New src/lib/pagination.ts with ITEMS_PER_PAGE/COLLECTIONS_PER_PAGE (21) + DASHBOARD_COLLECTIONS_LIMIT (6) / DASHBOARD_RECENT_ITEMS_LIMIT (10) and parsePageParam/clampPage/getPageCount helpers. Replaced getItemsByType with getItemsByTypePage(skip, take) → {items, total} and getCollectionDetail with getCollectionDetailPage (paginates ItemCollection with parallel count). New server-safe shadcn-style Pagination component with windowed page numbers and greyed-out prev/next at bounds. /items/[type] and /collections/[id] now read ?page=, fetch only the slice, clamp out-of-range. Dashboard queries (getRecentItems, getCollectionsForDashboard) bound by the new constants. Vitest coverage for pagination helpers and both paginated queries.
+- 2026-04-21: Settings Page — New protected /settings route (proxy prefix + matcher extended) that hosts the Account actions previously on /profile: change-password form (credentials users only) and delete-account danger zone, reusing ChangePasswordForm and DeleteAccountButton unchanged. Profile page trimmed to identity + usage stats only. Sidebar user dropdown (collapsed and expanded) gains a "Settings" link alongside Profile/Sign out, with matching lucide icons.
