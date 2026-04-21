@@ -1,4 +1,32 @@
 import { prisma } from '@/lib/prisma';
+import {
+  DEFAULT_EDITOR_PREFERENCES,
+  normalizeEditorPreferences,
+  type EditorPreferences,
+} from '@/lib/editor-preferences';
+
+export async function getEditorPreferences(
+  userId: string,
+): Promise<EditorPreferences> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { editorPreferences: true },
+  });
+
+  if (!user) return DEFAULT_EDITOR_PREFERENCES;
+  return normalizeEditorPreferences(user.editorPreferences);
+}
+
+export async function updateEditorPreferences(
+  userId: string,
+  preferences: EditorPreferences,
+): Promise<EditorPreferences> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: { editorPreferences: { ...preferences } },
+  });
+  return preferences;
+}
 
 export interface ProfileData {
   id: string;

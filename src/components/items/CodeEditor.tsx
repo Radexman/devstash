@@ -1,9 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { type Monaco } from '@monaco-editor/react';
 import { Check, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { useEditorPreferences } from '@/components/providers/EditorPreferencesProvider';
+import {
+  MONACO_THEME_BACKGROUNDS,
+  MONACO_THEME_TITLEBARS,
+  defineMonacoThemes,
+} from '@/lib/monaco-themes';
 
 interface CodeEditorProps {
   value: string;
@@ -19,6 +25,7 @@ export function CodeEditor({
   onChange,
 }: CodeEditorProps) {
   const [copied, setCopied] = useState(false);
+  const { preferences } = useEditorPreferences();
 
   const handleCopy = async () => {
     try {
@@ -31,13 +38,30 @@ export function CodeEditor({
     }
   };
 
+  const handleBeforeMount = (monaco: Monaco) => {
+    defineMonacoThemes(monaco);
+  };
+
   const lineCount = value.split('\n').length;
-  const editorHeight = Math.min(Math.max(lineCount * 19 + 16, 80), 400);
+  const lineHeight = preferences.fontSize + 6;
+  const editorHeight = Math.min(
+    Math.max(lineCount * lineHeight + 16, 80),
+    400,
+  );
+
+  const shellBg = MONACO_THEME_BACKGROUNDS[preferences.theme] ?? '#1e1e1e';
+  const titleBarBg = MONACO_THEME_TITLEBARS[preferences.theme] ?? '#2d2d2d';
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-[#1e1e1e]">
+    <div
+      className="overflow-hidden rounded-lg border border-border"
+      style={{ backgroundColor: shellBg }}
+    >
       {/* macOS-style title bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-[#404040]">
+      <div
+        className="flex items-center justify-between px-4 py-2 border-b border-[#404040]"
+        style={{ backgroundColor: titleBarBg }}
+      >
         <div className="flex items-center gap-2">
           {/* Traffic light dots */}
           <div className="flex items-center gap-1.5">
@@ -70,13 +94,15 @@ export function CodeEditor({
         height={editorHeight}
         language={language}
         value={value}
-        theme="vs-dark"
+        theme={preferences.theme}
+        beforeMount={handleBeforeMount}
         onChange={(v) => onChange?.(v ?? '')}
         options={{
           readOnly,
-          minimap: { enabled: false },
+          minimap: { enabled: preferences.minimap },
           scrollBeyondLastLine: false,
-          fontSize: 13,
+          fontSize: preferences.fontSize,
+          tabSize: preferences.tabSize,
           lineNumbers: readOnly ? 'off' : 'on',
           glyphMargin: false,
           folding: false,
@@ -93,7 +119,7 @@ export function CodeEditor({
             verticalScrollbarSize: 8,
             horizontalScrollbarSize: 8,
           },
-          wordWrap: 'on',
+          wordWrap: preferences.wordWrap ? 'on' : 'off',
           domReadOnly: readOnly,
           contextmenu: !readOnly,
           cursorStyle: readOnly ? 'underline-thin' : 'line',
