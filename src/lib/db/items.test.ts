@@ -32,7 +32,7 @@ describe('getItemsByTypePage', () => {
 				},
 				skip: 21,
 				take: 21,
-				orderBy: { updatedAt: 'desc' },
+				orderBy: [{ isPinned: 'desc' }, { updatedAt: 'desc' }],
 			}),
 		);
 		expect(mockCount).toHaveBeenCalledWith({

@@ -24,6 +24,7 @@ export function TopBar() {
 					variant="ghost"
 					size="icon"
 					aria-label="Favorites"
+					nativeButton={false}
 					render={<Link href="/favorites" />}
 				>
 					<Star className="h-4 w-4" />

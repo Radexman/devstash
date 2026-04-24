@@ -27,7 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
-import { deleteItem, toggleItemFavorite, updateItem } from '@/actions/items';
+import { deleteItem, toggleItemFavorite, toggleItemPin, updateItem } from '@/actions/items';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
@@ -75,6 +75,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const [favoriting, setFavoriting] = useState(false);
+	const [pinning, setPinning] = useState(false);
 
 	useEffect(() => {
 		if (!itemId) {
@@ -192,6 +193,24 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 		router.refresh();
 	};
 
+	const handleTogglePin = async () => {
+		if (!item || pinning) return;
+		const previous = item.isPinned;
+		const optimistic = !previous;
+		setItem({ ...item, isPinned: optimistic });
+		setPinning(true);
+		const result = await toggleItemPin(item.id);
+		setPinning(false);
+		if (!result.success) {
+			setItem({ ...item, isPinned: previous });
+			toast.error(result.error);
+			return;
+		}
+		setItem({ ...item, isPinned: result.data.isPinned });
+		toast.success(result.data.isPinned ? 'Item pinned' : 'Item unpinned');
+		router.refresh();
+	};
+
 	const handleCopy = async () => {
 		if (!item) return;
 		const text = item.content ?? item.url ?? '';
@@ -281,7 +300,14 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 										}
 									/>
 								</Button>
-								<Button variant="ghost" size="icon-sm" aria-label="Toggle pin" disabled>
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									aria-label="Toggle pin"
+									aria-pressed={item.isPinned}
+									onClick={handleTogglePin}
+									disabled={pinning}
+								>
 									<Pin
 										className={
 											item.isPinned ? 'h-4 w-4 fill-current' : 'h-4 w-4'

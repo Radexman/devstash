@@ -56,7 +56,10 @@ describe('getCollectionDetailPage', () => {
 				where: { collectionId: 'c1' },
 				skip: 21,
 				take: 21,
-				orderBy: { item: { updatedAt: 'desc' } },
+				orderBy: [
+					{ item: { isPinned: 'desc' } },
+					{ item: { updatedAt: 'desc' } },
+				],
 			}),
 		);
 		expect(mockICCount).toHaveBeenCalledWith({ where: { collectionId: 'c1' } });
