@@ -1,26 +1,12 @@
-# Current Feature: Homepage Mockup
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Build a standalone marketing homepage prototype at `prototypes/homepage/` (`index.html`, `styles.css`, `script.js`) — not wired into the Next.js app
-- Hero section with a "chaos → order" visual: left chaos container with 8 animated floating tool icons (Notion, GitHub, Slack, VS Code, browser tabs, terminal, text file, bookmark), center pulsing arrow, right simplified dashboard preview
-- Navigation bar (fixed, opacity-on-scroll), hero text with gradient headline + CTAs
-- Features grid (6 cards using item-type accent colors: Snippet/Prompt/Command/Note/File/Image)
-- AI section with "Pro Feature" badge + checklist on left, code editor mockup with "AI Generated Tags" demo on right
-- Pricing section: Free ($0, 50 items, 3 collections) vs Pro ($8/mo with monthly/yearly $72 toggle), "Most Popular" highlight on Pro
-- Final CTA band and footer with logo/link columns/dynamic copyright year
-- Animations: chaos icons use requestAnimationFrame (drift, wall-bounce, mouse repel), arrow CSS pulse, scroll fade-in, navbar opacity-on-scroll
-- Responsive: stack chaos/arrow/dashboard vertically on mobile, arrow rotates 90° to point down, single-column grids
-
 ## Notes
-
-- Dark theme with item-type accent palette: Snippet `#3b82f6`, Prompt `#f59e0b`, Command `#06b6d4`, Note `#22c55e`, File `#64748b`, Image `#ec4899`, URL `#6366f1`. These differ from the in-app palette in project-overview.md (e.g. Prompt is amber here vs purple in the app) — treat spec as source of truth for the mockup.
-- This is a static prototype/mockup, not a Next.js route. No auth, no server actions, no Prisma. No Vitest coverage expected (no server code).
-- Keep output self-contained in `prototypes/homepage/` — don't touch app code unless genuinely needed.
 
 ## History
 
@@ -64,3 +50,4 @@ In Progress
 - 2026-04-21: Favorite Toggle — New toggleItemFavorite / toggleCollectionFavorite db helpers (ownership-scoped findFirst + update) and matching server actions returning { id, isFavorite }. Wired real handlers into the ItemDrawer star button (previously disabled), CollectionDetailActions and CollectionCardMenu (previously placeholder toasts), and added a hover-revealed star button on ItemCard that stays visible when favorited. All client callers use optimistic local state with rollback-on-failure toast and router.refresh() so sidebar favorites, /favorites, and dashboard stay in sync. CollectionCardMenu now takes isFavorite and swaps label between Favorite/Unfavorite. Vitest coverage for both new actions (unauthorized, not-found, toggle on/off, query throw).
 - 2026-04-21: Favorites Page Client-Side Sorting — Extracted favorites list rendering into a new client component FavoritesList.tsx that holds sort state (date/name/type) and re-sorts items + collections with useMemo. shadcn-style Select in the top-right with ArrowUpDown icon + "Sort" label, compact h-8 trigger. Items sort by itemType.name then title in type mode; collections fall back to name in type mode (no type to sort by). Server page.tsx still handles auth, getFavorites, header and empty state.
 - 2026-04-24: Pinned Items — New toggleItemPin db helper (ownership-scoped findFirst + update) and server action returning { id, isPinned }. Wired the previously-disabled Pin button in ItemDrawer with optimistic local state, rollback-on-failure toast, success toast ("Item pinned"/"Item unpinned"), and router.refresh(). getItemsByTypePage and getCollectionDetailPage now sort [isPinned desc, updatedAt desc] so pinned items bubble to the top of listings. ItemCard shows a static Pin icon next to the title when isPinned. Updated existing sort-order test assertions. Vitest coverage for toggleItemPin (unauthorized / not-found / toggle on / toggle off / query throw). Also added nativeButton={false} to the TopBar favorites Button to silence a pre-existing Base UI warning on the Link-rendered button.
+- 2026-04-24: Homepage Mockup — New standalone marketing prototype at prototypes/homepage/ (index.html, styles.css, script.js), not wired into the Next.js app. Hero with "chaos → order" visual: 8 floating tool glyphs (Notion/GitHub/Slack/VS Code/tabs/terminal/file/bookmark as simplified inline SVGs) animated via requestAnimationFrame (wall bounce, mouse repel, sine-scale pulse, rotation) with ResizeObserver-bounded stage, pulsing gradient arrow, dashboard preview mockup. Fixed navbar with opacity-on-scroll, 6-card features grid using item-type accent palette (Snippet #3b82f6, Prompt #f59e0b, Command #06b6d4, Note #22c55e, File #64748b, Image #ec4899, URL #6366f1 — spec palette, not the in-app one), AI section with Pro badge + checklist + editor mockup + AI-generated tags, pricing monthly/yearly toggle ($8/mo ↔ $6/mo $72 billed yearly) with "Most popular" on Pro, CTA band and footer with dynamic year. IntersectionObserver scroll reveal; prefers-reduced-motion collapses animations and lays chaos icons out in a static grid.
