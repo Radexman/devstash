@@ -1,12 +1,26 @@
-# Current Feature
+# Current Feature: Homepage Mockup
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Build a standalone marketing homepage prototype at `prototypes/homepage/` (`index.html`, `styles.css`, `script.js`) — not wired into the Next.js app
+- Hero section with a "chaos → order" visual: left chaos container with 8 animated floating tool icons (Notion, GitHub, Slack, VS Code, browser tabs, terminal, text file, bookmark), center pulsing arrow, right simplified dashboard preview
+- Navigation bar (fixed, opacity-on-scroll), hero text with gradient headline + CTAs
+- Features grid (6 cards using item-type accent colors: Snippet/Prompt/Command/Note/File/Image)
+- AI section with "Pro Feature" badge + checklist on left, code editor mockup with "AI Generated Tags" demo on right
+- Pricing section: Free ($0, 50 items, 3 collections) vs Pro ($8/mo with monthly/yearly $72 toggle), "Most Popular" highlight on Pro
+- Final CTA band and footer with logo/link columns/dynamic copyright year
+- Animations: chaos icons use requestAnimationFrame (drift, wall-bounce, mouse repel), arrow CSS pulse, scroll fade-in, navbar opacity-on-scroll
+- Responsive: stack chaos/arrow/dashboard vertically on mobile, arrow rotates 90° to point down, single-column grids
+
 ## Notes
+
+- Dark theme with item-type accent palette: Snippet `#3b82f6`, Prompt `#f59e0b`, Command `#06b6d4`, Note `#22c55e`, File `#64748b`, Image `#ec4899`, URL `#6366f1`. These differ from the in-app palette in project-overview.md (e.g. Prompt is amber here vs purple in the app) — treat spec as source of truth for the mockup.
+- This is a static prototype/mockup, not a Next.js route. No auth, no server actions, no Prisma. No Vitest coverage expected (no server code).
+- Keep output self-contained in `prototypes/homepage/` — don't touch app code unless genuinely needed.
 
 ## History
 
