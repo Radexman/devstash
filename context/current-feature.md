@@ -1,12 +1,27 @@
-# Current Feature
+# Current Feature: Homepage
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Replace the `/` → `/dashboard` redirect with a marketing homepage; signed-in users still go to `/dashboard`, signed-out users see the landing page.
+- Port the `prototypes/homepage/` mockup (hero chaos → order, features, AI section, pricing, CTA band, footer) into the Next.js app using Tailwind v4 + shadcn/ui — no raw prototype CSS.
+- Split into server components by default, with client components only for interactivity (HeroVisual/ChaosStage animation, Pricing period toggle, optional navbar scroll opacity).
+- Wire every button/link to a real destination: Sign in → `/auth/signin`, Get started / Upgrade to Pro / CTA → `/auth/register`, Features/Pricing → in-page anchors, logo → `/`, legal/blog stay as `#` placeholders.
+- Reuse the real 5-type item palette (snippet/prompt/command/note/link) + a Collections card for the features grid — drop the prototype's file/image accents.
+- Keep content data (feature cards, AI checklist, plan bullets, footer columns) in typed const arrays so JSX stays thin.
+
 ## Notes
+
+- Place components under `src/components/home/` with a barrel `index.ts`. Server: `Navbar`, `Hero`, `Features`/`FeatureCard`, `AiSection`, `CtaBand`, `Footer`. Client: `HeroVisual`, `ChaosStage`, `Pricing`, optional `NavbarScroll`.
+- `ChaosStage` ports the requestAnimationFrame animation from `prototypes/homepage/script.js` (wall bounce, mouse repel, ResizeObserver bounds) with a `prefers-reduced-motion` static-grid fallback.
+- Pricing uses shadcn `Tabs` or `ToggleGroup` for monthly/yearly state; Pro price swaps $8/mo ↔ $6/mo with "$72 billed yearly" note.
+- Item-type accent per card via inline `style={{ '--c': color }}` + Tailwind arbitrary values (`bg-[color:var(--c)]/10`, `border-[color:var(--c)]/30`), mirroring the prototype's `--c` pattern. Gradient text via `bg-clip-text text-transparent` + `bg-gradient-to-r`.
+- Add a basic `metadata` export on `page.tsx` using the prototype's `<title>` and `<meta description>`. No analytics, i18n, or Stripe wiring.
+- Reveal-on-scroll is optional — prefer skipping to keep client JS minimal.
+- Spec: [context/features/homepage-spec.md](context/features/homepage-spec.md). Reference mockup: [prototypes/homepage/](prototypes/homepage/).
 
 ## History
 
