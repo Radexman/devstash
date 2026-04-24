@@ -1,27 +1,12 @@
-# Current Feature: Homepage
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Replace the `/` → `/dashboard` redirect with a marketing homepage; signed-in users still go to `/dashboard`, signed-out users see the landing page.
-- Port the `prototypes/homepage/` mockup (hero chaos → order, features, AI section, pricing, CTA band, footer) into the Next.js app using Tailwind v4 + shadcn/ui — no raw prototype CSS.
-- Split into server components by default, with client components only for interactivity (HeroVisual/ChaosStage animation, Pricing period toggle, optional navbar scroll opacity).
-- Wire every button/link to a real destination: Sign in → `/auth/signin`, Get started / Upgrade to Pro / CTA → `/auth/register`, Features/Pricing → in-page anchors, logo → `/`, legal/blog stay as `#` placeholders.
-- Reuse the real 5-type item palette (snippet/prompt/command/note/link) + a Collections card for the features grid — drop the prototype's file/image accents.
-- Keep content data (feature cards, AI checklist, plan bullets, footer columns) in typed const arrays so JSX stays thin.
-
 ## Notes
-
-- Place components under `src/components/home/` with a barrel `index.ts`. Server: `Navbar`, `Hero`, `Features`/`FeatureCard`, `AiSection`, `CtaBand`, `Footer`. Client: `HeroVisual`, `ChaosStage`, `Pricing`, optional `NavbarScroll`.
-- `ChaosStage` ports the requestAnimationFrame animation from `prototypes/homepage/script.js` (wall bounce, mouse repel, ResizeObserver bounds) with a `prefers-reduced-motion` static-grid fallback.
-- Pricing uses shadcn `Tabs` or `ToggleGroup` for monthly/yearly state; Pro price swaps $8/mo ↔ $6/mo with "$72 billed yearly" note.
-- Item-type accent per card via inline `style={{ '--c': color }}` + Tailwind arbitrary values (`bg-[color:var(--c)]/10`, `border-[color:var(--c)]/30`), mirroring the prototype's `--c` pattern. Gradient text via `bg-clip-text text-transparent` + `bg-gradient-to-r`.
-- Add a basic `metadata` export on `page.tsx` using the prototype's `<title>` and `<meta description>`. No analytics, i18n, or Stripe wiring.
-- Reveal-on-scroll is optional — prefer skipping to keep client JS minimal.
-- Spec: [context/features/homepage-spec.md](context/features/homepage-spec.md). Reference mockup: [prototypes/homepage/](prototypes/homepage/).
 
 ## History
 
@@ -66,3 +51,4 @@ In Progress
 - 2026-04-21: Favorites Page Client-Side Sorting — Extracted favorites list rendering into a new client component FavoritesList.tsx that holds sort state (date/name/type) and re-sorts items + collections with useMemo. shadcn-style Select in the top-right with ArrowUpDown icon + "Sort" label, compact h-8 trigger. Items sort by itemType.name then title in type mode; collections fall back to name in type mode (no type to sort by). Server page.tsx still handles auth, getFavorites, header and empty state.
 - 2026-04-24: Pinned Items — New toggleItemPin db helper (ownership-scoped findFirst + update) and server action returning { id, isPinned }. Wired the previously-disabled Pin button in ItemDrawer with optimistic local state, rollback-on-failure toast, success toast ("Item pinned"/"Item unpinned"), and router.refresh(). getItemsByTypePage and getCollectionDetailPage now sort [isPinned desc, updatedAt desc] so pinned items bubble to the top of listings. ItemCard shows a static Pin icon next to the title when isPinned. Updated existing sort-order test assertions. Vitest coverage for toggleItemPin (unauthorized / not-found / toggle on / toggle off / query throw). Also added nativeButton={false} to the TopBar favorites Button to silence a pre-existing Base UI warning on the Link-rendered button.
 - 2026-04-24: Homepage Mockup — New standalone marketing prototype at prototypes/homepage/ (index.html, styles.css, script.js), not wired into the Next.js app. Hero with "chaos → order" visual: 8 floating tool glyphs (Notion/GitHub/Slack/VS Code/tabs/terminal/file/bookmark as simplified inline SVGs) animated via requestAnimationFrame (wall bounce, mouse repel, sine-scale pulse, rotation) with ResizeObserver-bounded stage, pulsing gradient arrow, dashboard preview mockup. Fixed navbar with opacity-on-scroll, 6-card features grid using item-type accent palette (Snippet #3b82f6, Prompt #f59e0b, Command #06b6d4, Note #22c55e, File #64748b, Image #ec4899, URL #6366f1 — spec palette, not the in-app one), AI section with Pro badge + checklist + editor mockup + AI-generated tags, pricing monthly/yearly toggle ($8/mo ↔ $6/mo $72 billed yearly) with "Most popular" on Pro, CTA band and footer with dynamic year. IntersectionObserver scroll reveal; prefers-reduced-motion collapses animations and lays chaos icons out in a static grid.
+- 2026-04-24: Homepage — Ported prototypes/homepage into the real app at /. New src/app/page.tsx server component runs auth() and redirects signed-in users to /dashboard, otherwise renders the marketing page with `metadata` export (title + description from the prototype head). New src/components/home/ module with barrel index.ts: server components (Logo, Navbar, Hero, HeroVisual, DashboardMock, Features, FeatureCard, AiSection, CtaBand, Footer) built on Tailwind v4 + shadcn Button/Badge primitives, content (features, AI checklist, plan bullets, footer columns, dashboard mock, AI demo tags) extracted into typed const arrays in data.ts, chaos glyphs as inline SVG JSX in chaos-icons.tsx. Client components: NavbarScroll (sets data-scrolled attr for opaque backdrop), ChaosStage (ported rAF animation — wall bounce, mouse repel, ResizeObserver, reduced-motion static-grid fallback), Pricing (monthly/yearly state, $8/mo ↔ $6/mo + "$72 billed yearly" note). Features grid uses the real 5-type palette (snippet/prompt/command/note/link) + a Collections card; file/image accents dropped. All CTAs wired: Sign in → /sign-in, Get started / Upgrade to Pro / Try Pro free / CTA band → /register, Features/Pricing nav + footer → #features/#pricing anchors, logo → /, blog/legal stay as # placeholders. Item-type accents applied via inline --c CSS var with color-mix for tinted backgrounds. Build + 79 Vitest tests pass.
