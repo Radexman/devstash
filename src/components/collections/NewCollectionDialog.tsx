@@ -28,9 +28,23 @@ const emptyForm: FormState = {
   description: '',
 };
 
-export function NewCollectionDialog() {
+interface NewCollectionDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function NewCollectionDialog({
+  open: controlledOpen,
+  onOpenChange,
+}: NewCollectionDialogProps = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -65,10 +79,12 @@ export function NewCollectionDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Button variant="outline" onClick={() => setOpen(true)}>
-        <Plus className="mr-1 h-4 w-4" />
-        New Collection
-      </Button>
+      {!isControlled && (
+        <Button variant="outline" onClick={() => setOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" />
+          New Collection
+        </Button>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New collection</DialogTitle>

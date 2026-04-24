@@ -53,9 +53,20 @@ const emptyForm: FormState = {
   collectionIds: [],
 };
 
-export function NewItemDialog() {
+interface NewItemDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDialogProps = {}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  };
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
 
@@ -103,10 +114,12 @@ export function NewItemDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <Button onClick={() => setOpen(true)}>
-        <Plus className="mr-1 h-4 w-4" />
-        New Item
-      </Button>
+      {!isControlled && (
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="mr-1 h-4 w-4" />
+          New Item
+        </Button>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New item</DialogTitle>
