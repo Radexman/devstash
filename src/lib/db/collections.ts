@@ -251,7 +251,10 @@ export async function getCollectionDetailPage(
   const [rows, total] = await Promise.all([
     prisma.itemCollection.findMany({
       where: { collectionId },
-      orderBy: { item: { updatedAt: 'desc' } },
+      orderBy: [
+        { item: { isPinned: 'desc' } },
+        { item: { updatedAt: 'desc' } },
+      ],
       skip,
       take,
       select: {

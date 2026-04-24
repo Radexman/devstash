@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Copy, Star } from 'lucide-react';
+import { Copy, Pin, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { iconMap } from '@/lib/item-icons';
@@ -73,6 +73,12 @@ export function ItemCard({ item }: ItemCardProps) {
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
 					<span className="truncate font-medium">{item.title}</span>
+					{item.isPinned && (
+						<Pin
+							className="h-3 w-3 shrink-0 text-muted-foreground"
+							aria-label="Pinned"
+						/>
+					)}
 				</div>
 				{item.description && (
 					<p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">

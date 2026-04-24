@@ -9,6 +9,7 @@ vi.mock('@/lib/db/items', () => ({
   deleteItem: vi.fn(),
   createItem: vi.fn(),
   toggleItemFavorite: vi.fn(),
+  toggleItemPin: vi.fn(),
 }));
 
 vi.mock('@/lib/db/collections', () => ({
@@ -21,6 +22,7 @@ import {
   deleteItem as deleteItemQuery,
   createItem as createItemQuery,
   toggleItemFavorite as toggleItemFavoriteQuery,
+  toggleItemPin as toggleItemPinQuery,
   type ItemDetail,
 } from '@/lib/db/items';
 import { getUserCollectionIds } from '@/lib/db/collections';
@@ -29,6 +31,7 @@ import {
   deleteItem,
   createItem,
   toggleItemFavorite,
+  toggleItemPin,
 } from './items';
 
 const mockAuth = vi.mocked(auth);
@@ -36,6 +39,7 @@ const mockUpdate = vi.mocked(updateItemQuery);
 const mockDelete = vi.mocked(deleteItemQuery);
 const mockCreate = vi.mocked(createItemQuery);
 const mockToggleFavorite = vi.mocked(toggleItemFavoriteQuery);
+const mockTogglePin = vi.mocked(toggleItemPinQuery);
 const mockOwnedCollections = vi.mocked(getUserCollectionIds);
 
 const fakeDetail: ItemDetail = {
@@ -359,5 +363,46 @@ describe('toggleItemFavorite action', () => {
     mockToggleFavorite.mockRejectedValueOnce(new Error('db down'));
     const res = await toggleItemFavorite('i1');
     expect(res).toEqual({ success: false, error: 'Failed to update favorite' });
+  });
+});
+
+describe('toggleItemPin action', () => {
+  it('rejects unauthorized', async () => {
+    // @ts-expect-error null session
+    mockAuth.mockResolvedValueOnce(null);
+    const res = await toggleItemPin('i1');
+    expect(res).toEqual({ success: false, error: 'Unauthorized' });
+    expect(mockTogglePin).not.toHaveBeenCalled();
+  });
+
+  it('returns not found when the row does not belong to user', async () => {
+    mockTogglePin.mockResolvedValueOnce(null);
+    const res = await toggleItemPin('missing');
+    expect(mockTogglePin).toHaveBeenCalledWith('missing', 'u1');
+    expect(res).toEqual({ success: false, error: 'Item not found' });
+  });
+
+  it('returns new pinned=true when toggling on', async () => {
+    mockTogglePin.mockResolvedValueOnce({ isPinned: true });
+    const res = await toggleItemPin('i1');
+    expect(res).toEqual({
+      success: true,
+      data: { id: 'i1', isPinned: true },
+    });
+  });
+
+  it('returns new pinned=false when toggling off', async () => {
+    mockTogglePin.mockResolvedValueOnce({ isPinned: false });
+    const res = await toggleItemPin('i1');
+    expect(res).toEqual({
+      success: true,
+      data: { id: 'i1', isPinned: false },
+    });
+  });
+
+  it('returns error when the query throws', async () => {
+    mockTogglePin.mockRejectedValueOnce(new Error('db down'));
+    const res = await toggleItemPin('i1');
+    expect(res).toEqual({ success: false, error: 'Failed to update pin' });
   });
 });
