@@ -1,22 +1,12 @@
-# Current Feature: Homepage Link + Shared Folder Logo
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add a "Homepage" link in the nav of `/sign-in` and `/register` pages so users can return to the marketing homepage from the auth pages.
-- Replace the lettered "D" logo square with a folder icon (matching the homepage nav's logo treatment) on the dashboard TopBar.
-- Delete the existing "D" letter-in-a-box logo from the dashboard TopBar so the new folder icon is the sole brand mark.
-
 ## Notes
-
-- Homepage nav lives in [src/components/home/Navbar.tsx](src/components/home/Navbar.tsx) and uses [src/components/home/Logo.tsx](src/components/home/Logo.tsx).
-- Dashboard nav lives in [src/components/dashboard/TopBar.tsx](src/components/dashboard/TopBar.tsx) (the "D" letter box is at lines 27–29).
-- Auth pages are at [src/app/sign-in/page.tsx](src/app/sign-in/page.tsx) and [src/app/register/page.tsx](src/app/register/page.tsx).
-- Confirm with the user during `start` what the "folder icon" should look like — the current Logo.tsx renders a gradient "D" letter, not a folder icon. Likely intent: introduce a Lucide `Folder` (or `FolderOpen`) icon as the new shared logo and apply it to both the homepage Logo component and the dashboard TopBar so they match.
-- The "Homepage" link on auth pages should route to `/` and use the same simple link styling already present (e.g. the existing "Don't have an account? Sign up" links).
 
 ## History
 
@@ -63,3 +53,4 @@ In Progress
 - 2026-04-24: Homepage Mockup — New standalone marketing prototype at prototypes/homepage/ (index.html, styles.css, script.js), not wired into the Next.js app. Hero with "chaos → order" visual: 8 floating tool glyphs (Notion/GitHub/Slack/VS Code/tabs/terminal/file/bookmark as simplified inline SVGs) animated via requestAnimationFrame (wall bounce, mouse repel, sine-scale pulse, rotation) with ResizeObserver-bounded stage, pulsing gradient arrow, dashboard preview mockup. Fixed navbar with opacity-on-scroll, 6-card features grid using item-type accent palette (Snippet #3b82f6, Prompt #f59e0b, Command #06b6d4, Note #22c55e, File #64748b, Image #ec4899, URL #6366f1 — spec palette, not the in-app one), AI section with Pro badge + checklist + editor mockup + AI-generated tags, pricing monthly/yearly toggle ($8/mo ↔ $6/mo $72 billed yearly) with "Most popular" on Pro, CTA band and footer with dynamic year. IntersectionObserver scroll reveal; prefers-reduced-motion collapses animations and lays chaos icons out in a static grid.
 - 2026-04-24: Homepage — Ported prototypes/homepage into the real app at /. New src/app/page.tsx server component runs auth() and redirects signed-in users to /dashboard, otherwise renders the marketing page with `metadata` export (title + description from the prototype head). New src/components/home/ module with barrel index.ts: server components (Logo, Navbar, Hero, HeroVisual, DashboardMock, Features, FeatureCard, AiSection, CtaBand, Footer) built on Tailwind v4 + shadcn Button/Badge primitives, content (features, AI checklist, plan bullets, footer columns, dashboard mock, AI demo tags) extracted into typed const arrays in data.ts, chaos glyphs as inline SVG JSX in chaos-icons.tsx. Client components: NavbarScroll (sets data-scrolled attr for opaque backdrop), ChaosStage (ported rAF animation — wall bounce, mouse repel, ResizeObserver, reduced-motion static-grid fallback), Pricing (monthly/yearly state, $8/mo ↔ $6/mo + "$72 billed yearly" note). Features grid uses the real 5-type palette (snippet/prompt/command/note/link) + a Collections card; file/image accents dropped. All CTAs wired: Sign in → /sign-in, Get started / Upgrade to Pro / Try Pro free / CTA band → /register, Features/Pricing nav + footer → #features/#pricing anchors, logo → /, blog/legal stay as # placeholders. Item-type accents applied via inline --c CSS var with color-mix for tinted backgrounds. Build + 79 Vitest tests pass.
 - 2026-04-24: TopBar Mobile — Dashboard TopBar converted to a client component and made responsive. Brand text hidden below sm (square-only), search field flex-grows (min-w-0 flex-1) and picks up max-w-md + horizontal padding only from sm up, header padding px-3 sm:px-6. The three right-side actions (Favorites, New Collection, New Item) show as separate buttons from md up; below md they collapse into a single MoreHorizontal overflow DropdownMenu with "New item / New collection / Favorites" items. NewItemDialog and NewCollectionDialog refactored to accept optional open/onOpenChange controlled-mode props — when both are provided, their default pill trigger is skipped so TopBar's state can drive them from the mobile menu while still rendering one dialog instance. Uncontrolled usage (no props) behaves exactly as before, so no other callers needed updates. Build + 79 Vitest tests pass. Done directly on main (no feature branch).
+- 2026-04-27: Shared Folder Logo + Homepage Link on Auth Pages — Replaced the gradient "D" letter inside the homepage Logo with a Lucide `Folder` icon and extended the component with `href` (defaults to `/`) and `labelClassName` props. Dashboard TopBar dropped its hand-rolled "D" letter-in-a-box markup and now renders the shared `Logo` with `href="/dashboard"` and `labelClassName="hidden sm:inline"`, so homepage and dashboard share the exact same brand mark while the dashboard keeps its mobile-responsive label hide. Added a "← Back to homepage" link below the auth Card on `/sign-in` and `/register` (wrapper switched to `flex-col gap-4` with `py-10`). Also fixed a Tailwind v4 canonical-class warning (`bg-gradient-to-br` → `bg-linear-to-br`). Build + 79 Vitest tests pass.
