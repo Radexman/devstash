@@ -1,12 +1,22 @@
-# Current Feature
+# Current Feature: Homepage Link + Shared Folder Logo
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add a "Homepage" link in the nav of `/sign-in` and `/register` pages so users can return to the marketing homepage from the auth pages.
+- Replace the lettered "D" logo square with a folder icon (matching the homepage nav's logo treatment) on the dashboard TopBar.
+- Delete the existing "D" letter-in-a-box logo from the dashboard TopBar so the new folder icon is the sole brand mark.
+
 ## Notes
+
+- Homepage nav lives in [src/components/home/Navbar.tsx](src/components/home/Navbar.tsx) and uses [src/components/home/Logo.tsx](src/components/home/Logo.tsx).
+- Dashboard nav lives in [src/components/dashboard/TopBar.tsx](src/components/dashboard/TopBar.tsx) (the "D" letter box is at lines 27–29).
+- Auth pages are at [src/app/sign-in/page.tsx](src/app/sign-in/page.tsx) and [src/app/register/page.tsx](src/app/register/page.tsx).
+- Confirm with the user during `start` what the "folder icon" should look like — the current Logo.tsx renders a gradient "D" letter, not a folder icon. Likely intent: introduce a Lucide `Folder` (or `FolderOpen`) icon as the new shared logo and apply it to both the homepage Logo component and the dashboard TopBar so they match.
+- The "Homepage" link on auth pages should route to `/` and use the same simple link styling already present (e.g. the existing "Don't have an account? Sign up" links).
 
 ## History
 

@@ -71,7 +71,7 @@ function SignInForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Sign in to DevStash</CardTitle>
@@ -164,6 +164,12 @@ function SignInForm() {
           </p>
         </CardFooter>
       </Card>
+      <Link
+        href="/"
+        className="text-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline"
+      >
+        ← Back to homepage
+      </Link>
     </div>
   );
 }
