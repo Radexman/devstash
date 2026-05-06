@@ -34,7 +34,12 @@ import { auth } from '@/auth';
 import { canUseAi } from '@/lib/ai-limits';
 import { checkAiRateLimit } from '@/lib/rate-limit';
 import { getItemDetail } from '@/lib/db/items';
-import { explainCode, generateAutoTags, generateSummary } from './ai';
+import {
+	explainCode,
+	generateAutoTags,
+	generateSummary,
+	optimizePrompt,
+} from './ai';
 
 const mockAuth = vi.mocked(auth);
 const mockCanUseAi = vi.mocked(canUseAi);
@@ -654,6 +659,232 @@ describe('explainCode', () => {
 	it('maps unknown errors to a generic failure', async () => {
 		mockCreate.mockRejectedValueOnce(new Error('network down'));
 		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({ success: false, error: 'AI request failed.' });
+	});
+});
+
+describe('optimizePrompt', () => {
+	function buildPromptItem(overrides: Partial<MockItem> = {}): MockItem {
+		return buildItem({
+			id: 'prompt-1',
+			title: 'Code reviewer system prompt',
+			content: 'You review code. Be helpful.',
+			language: null,
+			itemType: { name: 'Prompt' },
+			...overrides,
+		});
+	}
+
+	it('rejects unauthorized', async () => {
+		mockAuth.mockResolvedValueOnce(null as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({ success: false, error: 'Unauthorized' });
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('rejects empty itemId', async () => {
+		const res = await optimizePrompt({ itemId: '   ' });
+		expect(res.success).toBe(false);
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('rejects free users with the Pro-required message', async () => {
+		mockCanUseAi.mockResolvedValueOnce({ allowed: false, reason: 'not_pro' });
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI features are Pro-only. Upgrade to Pro to enable.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('returns rate-limited error with retry-after seconds', async () => {
+		mockCheckRl.mockResolvedValueOnce({ ok: false, retryAfterSeconds: 23 });
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Too many AI requests. Try again in 23s.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('returns "not found" when getItemDetail returns null (foreign id)', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(null);
+		const res = await optimizePrompt({ itemId: 'someone-elses' });
+		expect(res).toEqual({ success: false, error: 'Item not found' });
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('rejects non-prompt types (snippet/command/note/link)', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildPromptItem({ itemType: { name: 'Snippet' } }) as never,
+		);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Only prompts can be optimized.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('rejects items with empty content', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildPromptItem({ content: '   ' }) as never,
+		);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Prompt is empty.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('re-fetches item with the session userId (ownership check)', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'You are an expert code reviewer. Review the supplied code carefully and surface bugs, edge cases, and stylistic issues.',
+		} as never);
+		await optimizePrompt({ itemId: 'prompt-1' });
+		expect(mockGetItemDetail).toHaveBeenCalledWith('prompt-1', 'u1');
+	});
+
+	it('returns original + optimized on success', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({
+			output_text:
+				'You are an expert code reviewer. Review the supplied code carefully and surface bugs, edge cases, and stylistic issues. Respond with a structured list.',
+		} as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: true,
+			data: {
+				original: 'You review code. Be helpful.',
+				optimized:
+					'You are an expert code reviewer. Review the supplied code carefully and surface bugs, edge cases, and stylistic issues. Respond with a structured list.',
+			},
+		});
+	});
+
+	it('trims whitespace from the model output', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({
+			output_text: '\n\n  Refined prompt text.  \n\n',
+		} as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res.success).toBe(true);
+		if (res.success) expect(res.data.optimized).toBe('Refined prompt text.');
+	});
+
+	it('strips wrapping straight quotes from output', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({
+			output_text: '"Be a senior React engineer and answer succinctly."',
+		} as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res.success).toBe(true);
+		if (res.success)
+			expect(res.data.optimized).toBe(
+				'Be a senior React engineer and answer succinctly.',
+			);
+	});
+
+	it('strips wrapping markdown code fences from output', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({
+			output_text: '```\nYou are a precise assistant.\n```',
+		} as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res.success).toBe(true);
+		if (res.success)
+			expect(res.data.optimized).toBe('You are a precise assistant.');
+	});
+
+	it('returns "no optimization" error when output_text is empty', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({ output_text: '' } as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI returned no optimization. Try again.',
+		});
+	});
+
+	it('returns "no optimization" error when output_text is missing', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({} as never);
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI returned no optimization. Try again.',
+		});
+	});
+
+	it('truncates prompt content to 2000 chars before sending', async () => {
+		const huge = 'x'.repeat(5000);
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildPromptItem({ content: huge }) as never,
+		);
+		mockCreate.mockResolvedValueOnce({ output_text: 'ok' } as never);
+		await optimizePrompt({ itemId: 'prompt-1' });
+		const arg = mockCreate.mock.calls[0]?.[0] as { input: string };
+		expect(arg.input.length).toBeLessThan(huge.length);
+		expect(arg.input).toContain('[truncated]');
+	});
+
+	it('uses text format, AI_MODEL, and optimize instructions', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'Refined prompt.',
+		} as never);
+		await optimizePrompt({ itemId: 'prompt-1' });
+		const arg = mockCreate.mock.calls[0]?.[0] as Record<string, unknown>;
+		expect(arg.model).toBe('gpt-5-nano');
+		expect(arg.text).toEqual({ format: { type: 'text' } });
+		expect(arg.instructions).toMatch(/refine/i);
+		const input = arg.input as string;
+		expect(input).toContain('Title: Code reviewer system prompt');
+		expect(input).toContain('Prompt:');
+		expect(input).toContain('You review code. Be helpful.');
+	});
+
+	it('maps OpenAI 429 to rate-limit message', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockRejectedValueOnce(makeApiError(429));
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'OpenAI is rate-limited. Try again shortly.',
+		});
+	});
+
+	it('maps OpenAI 401 to credentials message', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockRejectedValueOnce(makeApiError(401));
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI credentials are not configured.',
+		});
+	});
+
+	it('maps OpenAI 5xx to "having a moment"', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockRejectedValueOnce(makeApiError(503));
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'OpenAI is having a moment. Try again.',
+		});
+	});
+
+	it('maps unknown errors to a generic failure', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(buildPromptItem() as never);
+		mockCreate.mockRejectedValueOnce(new Error('network down'));
+		const res = await optimizePrompt({ itemId: 'prompt-1' });
 		expect(res).toEqual({ success: false, error: 'AI request failed.' });
 	});
 });

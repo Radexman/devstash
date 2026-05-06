@@ -3,24 +3,57 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Crown, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { optimizePrompt } from '@/actions/ai';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+interface OptimizeContext {
+  itemId: string;
+  isPro: boolean;
+  /**
+   * Called when the user accepts the optimized prompt. The parent persists the
+   * change (typically via `updateItem`) and resolves true on success so the
+   * editor can dismiss the comparison view; false leaves it open so the user
+   * can retry or reject.
+   */
+  onAccept: (optimized: string) => Promise<boolean>;
+}
 
 interface MarkdownEditorProps {
   value: string;
   readOnly?: boolean;
   onChange?: (value: string) => void;
+  /** When set, shows an "Optimize" button in the title bar that calls
+   * `optimizePrompt({ itemId })` and swaps the body into a before/after
+   * comparison panel. Only meaningful in read mode (drawer view); ignored
+   * otherwise. */
+  optimize?: OptimizeContext;
 }
 
 export function MarkdownEditor({
   value,
   readOnly = false,
   onChange,
+  optimize,
 }: MarkdownEditorProps) {
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>(
     readOnly ? 'preview' : 'write'
   );
   const [copied, setCopied] = useState(false);
+  const [optimizing, setOptimizing] = useState(false);
+  const [accepting, setAccepting] = useState(false);
+  const [optimization, setOptimization] = useState<{
+    original: string;
+    optimized: string;
+  } | null>(null);
+
+  const showOptimize = Boolean(optimize) && readOnly;
 
   const handleCopy = async () => {
     try {
@@ -31,6 +64,34 @@ export function MarkdownEditor({
     } catch {
       toast.error('Failed to copy');
     }
+  };
+
+  const handleOptimize = async () => {
+    if (!optimize || optimizing) return;
+    setOptimizing(true);
+    const result = await optimizePrompt({ itemId: optimize.itemId });
+    setOptimizing(false);
+    if (!result.success) {
+      toast.error(result.error);
+      return;
+    }
+    if (result.data.optimized.trim() === result.data.original.trim()) {
+      toast.success('Prompt is already well-structured — no changes suggested.');
+      return;
+    }
+    setOptimization(result.data);
+  };
+
+  const handleAccept = async () => {
+    if (!optimize || !optimization || accepting) return;
+    setAccepting(true);
+    const ok = await optimize.onAccept(optimization.optimized);
+    setAccepting(false);
+    if (ok) setOptimization(null);
+  };
+
+  const handleReject = () => {
+    setOptimization(null);
   };
 
   return (
@@ -64,21 +125,40 @@ export function MarkdownEditor({
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
-        >
-          {copied ? (
-            <Check className="h-3.5 w-3.5" />
-          ) : (
-            <Copy className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2">
+          {showOptimize && optimize && (
+            <OptimizeButton
+              isPro={optimize.isPro}
+              loading={optimizing}
+              disabled={optimizing || Boolean(optimization)}
+              onClick={handleOptimize}
+            />
           )}
-        </button>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
+            aria-label="Copy"
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Content area */}
-      {activeTab === 'write' && !readOnly ? (
+      {/* Body — content area or comparison */}
+      {optimization ? (
+        <OptimizationCompare
+          original={optimization.original}
+          optimized={optimization.optimized}
+          accepting={accepting}
+          onAccept={handleAccept}
+          onReject={handleReject}
+        />
+      ) : activeTab === 'write' && !readOnly ? (
         <textarea
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
@@ -101,6 +181,116 @@ export function MarkdownEditor({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+interface OptimizeButtonProps {
+  isPro: boolean;
+  loading: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+function OptimizeButton({ isPro, loading, disabled, onClick }: OptimizeButtonProps) {
+  if (!isPro) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            type="button"
+            aria-label="AI features require Pro subscription"
+            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
+          >
+            <Crown className="h-3.5 w-3.5" />
+            Optimize
+          </TooltipTrigger>
+          <TooltipContent>AI features require Pro subscription</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label="Optimize prompt with AI"
+      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc] disabled:opacity-60"
+    >
+      {loading ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Sparkles className="h-3.5 w-3.5" />
+      )}
+      Optimize
+    </button>
+  );
+}
+
+interface OptimizationCompareProps {
+  original: string;
+  optimized: string;
+  accepting: boolean;
+  onAccept: () => void;
+  onReject: () => void;
+}
+
+function OptimizationCompare({
+  original,
+  optimized,
+  accepting,
+  onAccept,
+  onReject,
+}: OptimizationCompareProps) {
+  return (
+    <div
+      className="flex flex-col"
+      style={{ maxHeight: 480 }}
+    >
+      <div className="grid grid-cols-1 gap-px bg-[#404040] md:grid-cols-2">
+        <div className="bg-[#1e1e1e] p-3">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#858585]">
+            Original
+          </p>
+          <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[#d4d4d4]">
+            {original}
+          </pre>
+        </div>
+        <div className="bg-[#1e1e1e] p-3">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+            Optimized
+          </p>
+          <pre className="whitespace-pre-wrap font-mono text-xs leading-relaxed text-[#d4d4d4]">
+            {optimized}
+          </pre>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-2 border-t border-[#404040] bg-[#252525] px-3 py-2">
+        <button
+          type="button"
+          onClick={onReject}
+          disabled={accepting}
+          className="flex items-center gap-1 rounded px-2 py-1 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc] disabled:opacity-60"
+        >
+          <X className="h-3.5 w-3.5" />
+          Use original
+        </button>
+        <button
+          type="button"
+          onClick={onAccept}
+          disabled={accepting}
+          className="flex items-center gap-1 rounded bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-60"
+        >
+          {accepting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
+          {accepting ? 'Saving…' : 'Use optimized'}
+        </button>
+      </div>
     </div>
   );
 }

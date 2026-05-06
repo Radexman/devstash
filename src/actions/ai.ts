@@ -22,8 +22,11 @@ const SUMMARY_INSTRUCTIONS = `You write a concise 1-2 sentence description for a
 
 const EXPLAIN_INSTRUCTIONS = `You explain code or terminal commands to a developer in a concise, focused way. Output plain Markdown (no preamble like "Sure!" or "Here's an explanation"). Lead with one short sentence describing what the code does, then a short bulleted list (3-6 bullets) covering key concepts, notable APIs, side effects, and gotchas. Use inline \`code\` for identifiers and short snippets, and fenced blocks only when quoting multi-line output. Aim for 200-300 words total. Do not invent behavior the code does not have.`;
 
+const OPTIMIZE_INSTRUCTIONS = `You refine prompts written for large language models so they are clearer, more specific, and better-structured. Preserve the user's original intent — never change the goal of the prompt. Improve clarity, add missing constraints (output format, role, audience) only when they are clearly implied, and tighten ambiguous phrasing. If the prompt is already strong, return it unchanged. Output only the optimized prompt itself — no commentary, no preamble like "Here is the optimized prompt:", no surrounding quotes, no code fences.`;
+
 const ITEM_TYPES = ['snippet', 'prompt', 'command', 'note', 'link'] as const;
 const EXPLAINABLE_TYPES = new Set(['snippet', 'command']);
+const OPTIMIZABLE_TYPES = new Set(['prompt']);
 
 const generateAutoTagsSchema = z.object({
   title: z.string().trim().min(1, 'Title is required'),
@@ -293,6 +296,116 @@ function buildExplainInput({
   parts.push(`Code:\n${truncate(code, MAX_CONTENT_CHARS)}`);
   parts.push('Explain what this does.');
   return parts.join('\n\n');
+}
+
+const optimizePromptSchema = z.object({
+  itemId: z.string().trim().min(1, 'Item id is required'),
+});
+
+export type OptimizePromptPayload = z.input<typeof optimizePromptSchema>;
+
+export async function optimizePrompt(
+  payload: OptimizePromptPayload,
+): Promise<ActionResult<{ original: string; optimized: string }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const parsed = optimizePromptSchema.safeParse(payload);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const access = await canUseAi(session.user.id);
+  if (!access.allowed) {
+    return { success: false, error: PRO_REQUIRED };
+  }
+
+  const rl = await checkAiRateLimit(session.user.id);
+  if (!rl.ok) {
+    return {
+      success: false,
+      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
+    };
+  }
+
+  // Re-fetch the item server-side so a malicious client can't optimize a
+  // prompt they don't own.
+  const item = await getItemDetail(parsed.data.itemId, session.user.id);
+  if (!item) {
+    return { success: false, error: 'Item not found' };
+  }
+
+  const typeName = item.itemType.name.toLowerCase();
+  if (!OPTIMIZABLE_TYPES.has(typeName)) {
+    return {
+      success: false,
+      error: 'Only prompts can be optimized.',
+    };
+  }
+
+  const original = item.content?.trim() ?? '';
+  if (!original) {
+    return { success: false, error: 'Prompt is empty.' };
+  }
+
+  const input = buildOptimizeInput({ title: item.title, prompt: original });
+
+  try {
+    const response = await openai.responses.create({
+      model: AI_MODEL,
+      instructions: OPTIMIZE_INSTRUCTIONS,
+      input,
+      text: { format: { type: 'text' } },
+    });
+
+    const optimized = cleanOptimized(response.output_text);
+    if (!optimized) {
+      return {
+        success: false,
+        error: 'AI returned no optimization. Try again.',
+      };
+    }
+
+    return { success: true, data: { original, optimized } };
+  } catch (err) {
+    console.error('optimizePrompt failed', err);
+    return { success: false, error: mapOpenAiError(err) };
+  }
+}
+
+function buildOptimizeInput({
+  title,
+  prompt,
+}: {
+  title: string;
+  prompt: string;
+}): string {
+  return [
+    `Title: ${title}`,
+    `Prompt:\n${truncate(prompt, MAX_CONTENT_CHARS)}`,
+    'Refine this prompt. Output only the optimized prompt.',
+  ].join('\n\n');
+}
+
+function cleanOptimized(raw: string | undefined | null): string {
+  if (!raw) return '';
+  let s = raw.trim();
+  // Strip wrapping quotes / fences if the model added any.
+  if (s.startsWith('```')) {
+    // Drop the first fence line and the trailing fence.
+    s = s.replace(/^```[a-zA-Z0-9]*\n?/, '').replace(/```\s*$/, '').trim();
+  }
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith('“') && s.endsWith('”')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
 }
 
 function cleanSummary(raw: string | undefined | null): string {
