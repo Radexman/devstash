@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -9,6 +10,8 @@ import { ChangePasswordForm } from '@/components/profile/ChangePasswordForm';
 import { DeleteAccountButton } from '@/components/profile/DeleteAccountButton';
 import { EditorPreferencesForm } from '@/components/profile/EditorPreferencesForm';
 import { EditorPreferencesLoader } from '@/components/providers/EditorPreferencesLoader';
+import { SubscriptionCard } from '@/components/settings/SubscriptionCard';
+import { CheckoutToast } from '@/components/settings/CheckoutToast';
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -39,6 +42,10 @@ export default async function SettingsPage() {
         </header>
 
         <main className="mx-auto max-w-3xl px-6 py-8 space-y-6">
+          <Suspense fallback={null}>
+            <CheckoutToast />
+          </Suspense>
+
           <h1 className="text-2xl font-bold">Settings</h1>
 
           <Card>
@@ -49,6 +56,8 @@ export default async function SettingsPage() {
               <EditorPreferencesForm />
             </CardContent>
           </Card>
+
+          <SubscriptionCard userId={session.user.id} />
 
           <Card>
             <CardHeader>

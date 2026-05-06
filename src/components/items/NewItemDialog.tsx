@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
+import { UpgradeButton } from '@/components/billing/UpgradeButton';
 import { createItem } from '@/actions/items';
 
 const TYPES = [
@@ -69,6 +70,7 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDia
   };
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -79,6 +81,7 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDia
 
   const handleSubmit = async () => {
     setSaving(true);
+    setLimitError(null);
     const result = await createItem({
       type: form.type,
       title: form.title,
@@ -92,7 +95,11 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDia
     setSaving(false);
 
     if (!result.success) {
-      toast.error(result.error);
+      if (result.error.startsWith('Free plan limit')) {
+        setLimitError(result.error);
+      } else {
+        toast.error(result.error);
+      }
       return;
     }
 
@@ -104,13 +111,17 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDia
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (!next) setForm(emptyForm);
+    if (!next) {
+      setForm(emptyForm);
+      setLimitError(null);
+    }
   };
 
   const canSubmit =
     form.title.trim().length > 0 &&
     (form.type !== 'link' || form.url.trim().length > 0) &&
-    !saving;
+    !saving &&
+    !limitError;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -127,6 +138,13 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDia
             Create a new item in your stash.
           </DialogDescription>
         </DialogHeader>
+
+        {limitError && (
+          <div className="flex flex-col gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-amber-200">{limitError}</p>
+            <UpgradeButton interval="monthly">Upgrade</UpgradeButton>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div className="space-y-1.5">

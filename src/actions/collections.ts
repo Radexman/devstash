@@ -9,6 +9,7 @@ import {
   updateCollection as updateCollectionQuery,
   type CollectionSummary,
 } from '@/lib/db/collections';
+import { canCreate } from '@/lib/plan-limits';
 
 const collectionSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
@@ -38,6 +39,14 @@ export async function createCollection(
   if (!parsed.success) {
     const first = parsed.error.issues[0];
     return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const limit = await canCreate(session.user.id, 'collections');
+  if (!limit.allowed) {
+    return {
+      success: false,
+      error: `Free plan limit of ${limit.limit} collections reached. Upgrade to Pro for unlimited.`,
+    };
   }
 
   try {

@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { UpgradeButton } from '@/components/billing/UpgradeButton';
 import { createCollection } from '@/actions/collections';
 
 interface FormState {
@@ -47,12 +48,14 @@ export function NewCollectionDialog({
   };
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   const handleSubmit = async () => {
     setSaving(true);
+    setLimitError(null);
     const result = await createCollection({
       name: form.name,
       description: form.description,
@@ -60,7 +63,11 @@ export function NewCollectionDialog({
     setSaving(false);
 
     if (!result.success) {
-      toast.error(result.error);
+      if (result.error.startsWith('Free plan limit')) {
+        setLimitError(result.error);
+      } else {
+        toast.error(result.error);
+      }
       return;
     }
 
@@ -72,10 +79,13 @@ export function NewCollectionDialog({
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
-    if (!next) setForm(emptyForm);
+    if (!next) {
+      setForm(emptyForm);
+      setLimitError(null);
+    }
   };
 
-  const canSubmit = form.name.trim().length > 0 && !saving;
+  const canSubmit = form.name.trim().length > 0 && !saving && !limitError;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -92,6 +102,13 @@ export function NewCollectionDialog({
             Group items together into a named collection.
           </DialogDescription>
         </DialogHeader>
+
+        {limitError && (
+          <div className="flex flex-col gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-amber-200">{limitError}</p>
+            <UpgradeButton interval="monthly">Upgrade</UpgradeButton>
+          </div>
+        )}
 
         <div className="space-y-4">
           <div className="space-y-1.5">
