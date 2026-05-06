@@ -434,6 +434,7 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 											value={item.content}
 											language={item.language ?? 'plaintext'}
 											readOnly
+											explain={{ itemId: item.id, isPro }}
 										/>
 									) : (
 										<MarkdownEditor
