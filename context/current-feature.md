@@ -1,12 +1,57 @@
-# Current Feature
+# Current Feature: AI Auto-Tagging
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add AI-powered tag suggestions to items using OpenAI `gpt-5-nano` (Pro-only)
+- Establish the OpenAI foundation if not already in place: `src/lib/openai.ts` client (lazy `Proxy` like `stripe.ts`) with an exported `AI_MODEL` constant, AI rate-limit config (20 requests/hour per user) on the existing rate-limit utility
+- New `generateAutoTags` server action: auth → Pro gating (`canUseAi`) → Zod validation → rate limit → OpenAI call → return 3–5 freeform tag suggestions
+- "Suggest Tags" button (Sparkles icon, ghost variant) near the tags input in `NewItemDialog` and in `ItemDrawer` edit mode; **hidden for free users** (UI gating + server gating both required)
+- Display each suggestion as a Badge with accept (check) / reject (X) controls; accepted tags are appended to the item's tag list, rejected ones disappear; tags are freeform (not constrained to existing DB tags)
+- Truncate item content to 2000 chars before sending to the API; normalize returned tags to lowercase
+- Error handling via toast for: not Pro, rate limit (429), AI service errors
+- Vitest unit tests for the server action
+
 ## Notes
+
+### OpenAI SDK & gpt-5-nano — CRITICAL gotchas
+
+The `openai` npm package v6+ has **two** APIs. `gpt-5-nano` does **NOT** work with Chat Completions (returns empty content). Must use the **Responses API**:
+
+```ts
+// CORRECT
+const response = await client.responses.create({
+  model: 'gpt-5-nano',
+  instructions: 'You are a developer tool assistant...',
+  input: 'Suggest 3-5 tags for this snippet...',
+  text: { format: { type: 'json_object' } },
+});
+const text = response.output_text; // content lives here
+```
+
+| Chat Completions | Responses API |
+|---|---|
+| `client.chat.completions.create()` | `client.responses.create()` |
+| `messages: [{ role, content }]` | `instructions` (system) + `input` (user) |
+| `response_format: { type: 'json_object' }` | `text: { format: { type: 'json_object' } }` |
+| `completion.choices[0].message.content` | `response.output_text` |
+| `max_tokens` | use `max_output_tokens` (or omit) |
+
+Other gotchas:
+- `max_tokens` is **not** supported — use `max_output_tokens` if you need it
+- `zodResponseFormat` (structured output) burns excessive tokens with `gpt-5-nano` and hits length limits — use `json_object` and parse manually
+- Model may return `{"tags": ["a","b"]}` **or** `["a","b"]` — handle both
+- Always lowercase tags after parsing
+
+### Environment / wiring
+
+- `OPENAI_API_KEY` is already in `.env`
+- `isPro` is on the server session but not currently passed to `NewItemDialog` / `ItemDrawer` — for the UI hide we'll need to either pass `isPro` as a prop from the layouts that render TopBar (same pattern as the Upgrade button) or fetch it client-side; server-side gating in the action is the source of truth
+- Full architectural backdrop: `docs/ai-integration-plan.md` (auto-tag is the first of four planned AI features and seeds the `src/lib/openai.ts` + `src/lib/ai-rate-limit.ts` + `canUseAi` foundation that summary / explain / prompt-optimizer will reuse)
+- Spec: `context/features/ai-auto-tag-spec.md`
 
 ## History
 

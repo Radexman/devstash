@@ -1,0 +1,147 @@
+'use server';
+
+import { z } from 'zod';
+import OpenAI from 'openai';
+import { auth } from '@/auth';
+import { openai, AI_MODEL } from '@/lib/openai';
+import { canUseAi } from '@/lib/ai-limits';
+import { checkAiRateLimit } from '@/lib/rate-limit';
+
+type ActionResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+
+const MAX_CONTENT_CHARS = 2000;
+const PRO_REQUIRED = 'AI features are Pro-only. Upgrade to Pro to enable.';
+
+const AUTO_TAG_INSTRUCTIONS = `You suggest 3-5 short, lowercase tags for a developer's saved item (snippet, prompt, command, note, or link). Tags should be 1-3 words, hyphenated, and describe the topic, technology, or use case (e.g. "react-hooks", "docker", "sql", "auth"). Return only JSON in the form {"tags": ["tag1", "tag2", ...]} — no prose, no preamble.`;
+
+const generateAutoTagsSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required'),
+  description: z.string().nullish(),
+  content: z.string().nullish(),
+});
+
+export type GenerateAutoTagsPayload = z.input<typeof generateAutoTagsSchema>;
+
+export async function generateAutoTags(
+  payload: GenerateAutoTagsPayload,
+): Promise<ActionResult<{ tags: string[] }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const parsed = generateAutoTagsSchema.safeParse(payload);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const access = await canUseAi(session.user.id);
+  if (!access.allowed) {
+    return { success: false, error: PRO_REQUIRED };
+  }
+
+  const rl = await checkAiRateLimit(session.user.id);
+  if (!rl.ok) {
+    return {
+      success: false,
+      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
+    };
+  }
+
+  const input = buildInput(parsed.data);
+
+  try {
+    const response = await openai.responses.create({
+      model: AI_MODEL,
+      instructions: AUTO_TAG_INSTRUCTIONS,
+      input,
+      text: { format: { type: 'json_object' } },
+    });
+
+    const tags = parseTags(response.output_text);
+    if (tags.length === 0) {
+      return { success: false, error: 'AI returned no tags. Try again.' };
+    }
+
+    return { success: true, data: { tags } };
+  } catch (err) {
+    console.error('generateAutoTags failed', err);
+    return { success: false, error: mapOpenAiError(err) };
+  }
+}
+
+function buildInput({
+  title,
+  description,
+  content,
+}: {
+  title: string;
+  description?: string | null;
+  content?: string | null;
+}): string {
+  const parts = [`Title: ${title}`];
+  if (description && description.trim().length > 0) {
+    parts.push(`Description: ${description.trim()}`);
+  }
+  if (content && content.trim().length > 0) {
+    parts.push(`Content:\n${truncate(content, MAX_CONTENT_CHARS)}`);
+  }
+  // OpenAI requires the literal word "json" in the input when using
+  // text.format.type: 'json_object', otherwise it 400s.
+  parts.push('Respond with JSON: {"tags": ["tag1", "tag2", ...]}.');
+  return parts.join('\n\n');
+}
+
+function truncate(s: string, max: number): string {
+  return s.length <= max ? s : `${s.slice(0, max)}\n…[truncated]`;
+}
+
+/**
+ * Parse the model's JSON response. Per the spec, gpt-5-nano with
+ * `json_object` format may return either {"tags": [...]} or a bare [...]
+ * array. Tolerate both, then lowercase + dedupe.
+ */
+function parseTags(raw: string | undefined | null): string[] {
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+
+  let candidates: unknown[] = [];
+  if (Array.isArray(parsed)) {
+    candidates = parsed;
+  } else if (parsed && typeof parsed === 'object' && 'tags' in parsed) {
+    const v = (parsed as { tags: unknown }).tags;
+    if (Array.isArray(v)) candidates = v;
+  }
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const c of candidates) {
+    if (typeof c !== 'string') continue;
+    const tag = c.toLowerCase().trim().replace(/\s+/g, '-');
+    if (!tag || tag.length > 40 || seen.has(tag)) continue;
+    seen.add(tag);
+    out.push(tag);
+    if (out.length >= 5) break;
+  }
+  return out;
+}
+
+function mapOpenAiError(err: unknown): string {
+  if (err instanceof OpenAI.APIError) {
+    if (err.status === 429) return 'OpenAI is rate-limited. Try again shortly.';
+    if (err.status === 401) return 'AI credentials are not configured.';
+    if (err.status && err.status >= 500) {
+      return 'OpenAI is having a moment. Try again.';
+    }
+    return 'AI request failed.';
+  }
+  return 'AI request failed.';
+}
