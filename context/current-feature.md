@@ -1,57 +1,12 @@
-# Current Feature: AI Auto-Tagging
+# Current Feature
 
 ## Status
 
-In Progress
+Not Started
 
 ## Goals
 
-- Add AI-powered tag suggestions to items using OpenAI `gpt-5-nano` (Pro-only)
-- Establish the OpenAI foundation if not already in place: `src/lib/openai.ts` client (lazy `Proxy` like `stripe.ts`) with an exported `AI_MODEL` constant, AI rate-limit config (20 requests/hour per user) on the existing rate-limit utility
-- New `generateAutoTags` server action: auth → Pro gating (`canUseAi`) → Zod validation → rate limit → OpenAI call → return 3–5 freeform tag suggestions
-- "Suggest Tags" button (Sparkles icon, ghost variant) near the tags input in `NewItemDialog` and in `ItemDrawer` edit mode; **hidden for free users** (UI gating + server gating both required)
-- Display each suggestion as a Badge with accept (check) / reject (X) controls; accepted tags are appended to the item's tag list, rejected ones disappear; tags are freeform (not constrained to existing DB tags)
-- Truncate item content to 2000 chars before sending to the API; normalize returned tags to lowercase
-- Error handling via toast for: not Pro, rate limit (429), AI service errors
-- Vitest unit tests for the server action
-
 ## Notes
-
-### OpenAI SDK & gpt-5-nano — CRITICAL gotchas
-
-The `openai` npm package v6+ has **two** APIs. `gpt-5-nano` does **NOT** work with Chat Completions (returns empty content). Must use the **Responses API**:
-
-```ts
-// CORRECT
-const response = await client.responses.create({
-  model: 'gpt-5-nano',
-  instructions: 'You are a developer tool assistant...',
-  input: 'Suggest 3-5 tags for this snippet...',
-  text: { format: { type: 'json_object' } },
-});
-const text = response.output_text; // content lives here
-```
-
-| Chat Completions | Responses API |
-|---|---|
-| `client.chat.completions.create()` | `client.responses.create()` |
-| `messages: [{ role, content }]` | `instructions` (system) + `input` (user) |
-| `response_format: { type: 'json_object' }` | `text: { format: { type: 'json_object' } }` |
-| `completion.choices[0].message.content` | `response.output_text` |
-| `max_tokens` | use `max_output_tokens` (or omit) |
-
-Other gotchas:
-- `max_tokens` is **not** supported — use `max_output_tokens` if you need it
-- `zodResponseFormat` (structured output) burns excessive tokens with `gpt-5-nano` and hits length limits — use `json_object` and parse manually
-- Model may return `{"tags": ["a","b"]}` **or** `["a","b"]` — handle both
-- Always lowercase tags after parsing
-
-### Environment / wiring
-
-- `OPENAI_API_KEY` is already in `.env`
-- `isPro` is on the server session but not currently passed to `NewItemDialog` / `ItemDrawer` — for the UI hide we'll need to either pass `isPro` as a prop from the layouts that render TopBar (same pattern as the Upgrade button) or fetch it client-side; server-side gating in the action is the source of truth
-- Full architectural backdrop: `docs/ai-integration-plan.md` (auto-tag is the first of four planned AI features and seeds the `src/lib/openai.ts` + `src/lib/ai-rate-limit.ts` + `canUseAi` foundation that summary / explain / prompt-optimizer will reuse)
-- Spec: `context/features/ai-auto-tag-spec.md`
 
 ## History
 
@@ -105,3 +60,4 @@ Other gotchas:
 - 2026-05-06: Upgrade Page + TopBar Upgrade Button — New protected `/upgrade` route (proxy prefix + matcher extended) wraps the existing homepage `PricingPlans` in a focused shell with a "Back to Dashboard" link (mirroring `/settings`); reusing PricingPlans means the monthly/yearly toggle, free vs pro feature lists, "Most popular" badge on Pro, "Current plan" pill for Pro users, and the existing `UpgradeButton` Stripe checkout flow all come for free. CheckoutToast intentionally omitted because Stripe `success_url`/`cancel_url` already point at `/settings`. TopBar gained an `isPro?: boolean` prop and renders a subtle ghost-variant "Upgrade" button (Sparkles icon) for free users only — both as a desktop button (between SearchTrigger and the favorites star) and as the last entry in the mobile overflow `MoreHorizontal` dropdown. Threaded `isPro={session.user.isPro}` through the four layouts that mount TopBar (dashboard / items / collections / favorites). `/items/files` and `/items/images` now `redirect('/upgrade')` at the top of `/items/[type]/page.tsx` (was a 404 since the File/Image item types were dropped on 2026-04-19); the redirect happens for everyone — Pro users land on `/upgrade` and see "Current plan". 110 Vitest tests pass, build green (`/upgrade` registered as `ƒ`), no new lint warnings (the 3 pre-existing ones remain).
 - 2026-05-06: AI Integration Research — Documentation-only research output at `docs/ai-integration-plan.md` (driven by `context/research/ai-integration-research.md`). 13-section plan for layering four Pro-only AI features (auto-tag, summary, "explain this code" with streaming, prompt optimizer) onto OpenAI `gpt-5-nano`. Models the foundation files (`src/lib/openai.ts` with the same lazy `Proxy` pattern as `stripe.ts`, `src/lib/ai-limits.ts` mirroring `plan-limits.ts`, server-action-friendly `src/lib/ai-rate-limit.ts`, shared system prompts), four `src/actions/ai.ts` actions (`responses.parse` with `zodTextFormat` for structured output, `responses.create` with `reasoning_effort` knobs per feature), an `/api/ai/explain` POST route streaming `response.output_text.delta` events as `text/plain`, three-layer Pro gating (client UI / server `canUseAi` / JWT `isPro` re-read), Upstash `30/min + 300/24h` per-user limits, monthly soft cap, cost optimization (truncation, caching, `reasoning_effort: 'minimal'`), security (no client keys, prompt-injection envelope, server-side `getItemDetail` ownership re-fetch on every call), Vitest checklist, 7-step implementation order, and an optional v2 `AiCall` Prisma model for per-user metering. No code, no commits, no schema touched.
 - 2026-05-06: Language Dropdown — Replaced the free-text Language input in NewItemDialog and ItemDrawer's edit form with a curated Monaco-aware native `<select>`, moved above the Content editor so picking a language switches syntax highlighting in the live `<CodeEditor>` immediately. New `src/lib/code-languages.ts` exports 28 language IDs + display labels (plaintext default, plus bash/c/cpp/csharp/css/dockerfile/go/graphql/html/java/javascript/json/kotlin/lua/markdown/php/powershell/python/ruby/rust/scss/shell/sql/swift/typescript/xml/yaml) and a `getLanguageOptions(currentValue)` helper that prepends an unknown legacy value as a synthetic first option so existing items with custom language strings keep their label on edit. NewItemDialog `emptyForm.language` now defaults to `'plaintext'`; ItemDrawer's `toEditForm` falls back to `'plaintext'` when `item.language` is null. Native `<select>` matches the existing Type dropdown's classes verbatim — no new shadcn primitive. 110 Vitest tests pass, build clean.
+- 2026-05-06: AI Auto-Tagging — First Pro-only AI feature, layered on top of the AI integration plan. New `src/lib/openai.ts` (lazy `Proxy` singleton + `AI_MODEL` env-pinned constant defaulting to `'gpt-5-nano'`, mirroring `stripe.ts` so missing keys never break `next build`), new `src/lib/ai-limits.ts` with `canUseAi(userId)` Pro-only gate (re-reads `isPro` from DB), `src/lib/rate-limit.ts` extended with `rateLimiters.ai` (20/h per user) plus a server-action-friendly `checkAiRateLimit` returning `{ ok, retryAfterSeconds }` instead of `NextResponse`. New `src/lib/tags.ts` exposes `parseTagString` / `appendTagToString` (case-insensitive dedupe) shared by both dialogs. New `src/actions/ai.ts` `generateAutoTags({ title, description?, content? })` runs auth → Zod (title required) → `canUseAi` → `checkAiRateLimit` → `openai.responses.create` with `text.format.type: 'json_object'` (per spec gotcha — `zodTextFormat` blows up tokens on `gpt-5-nano`); content truncated to 2000 chars before send, input always includes the literal word "json" (Responses API 400s without it). Manual JSON parse handles both `{tags:[…]}` and bare `[…]` shapes, lowercases, hyphenates whitespace, dedupes, caps at 5. `mapOpenAiError` maps OpenAI 401/429/5xx to user-friendly toast strings. UI: new `SuggestTagsButton` (Sparkles ghost) returns `null` for free users (UI gate; server gate is the source of truth) and renders accepted suggestions as Badge chips with check/X controls — accepted tags appended to the comma-separated tags string, rejected ones disappear. `isPro` threaded through all 4 dashboard-shell layouts (dashboard / items / collections / favorites) → `ItemDrawerProvider` → `ItemDrawer`, and from `TopBar` → `NewItemDialog`. Vitest coverage: 19 cases on `generateAutoTags` (unauth, empty title, not-Pro, rate-limited+retry, success for both JSON shapes, lowercase/hyphenate/dedupe, 5-cap, empty/invalid/missing `output_text`, content truncation, description omit-when-blank, request-shape, json-in-input regression, 401/429/5xx/unknown error mapping) plus 7 cases on the tag helpers. 136 Vitest tests pass (was 110), build green, lint unchanged (3 pre-existing warnings remain). `OPENAI_MODEL=gpt-5-nano` added to `.env.example` (gitignored — not committed). v1 ships auto-tag only; summary / explain / optimize from the AI plan layer on later using the same `openai` + `canUseAi` + `checkAiRateLimit` foundation.
