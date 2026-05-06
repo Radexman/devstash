@@ -37,6 +37,10 @@ export default async function ItemsByTypePage({
 	const { page: pageParam } = await searchParams;
 	const typeSlug = type.toLowerCase();
 
+	if (typeSlug === 'files' || typeSlug === 'images') {
+		redirect('/upgrade');
+	}
+
 	const itemType = await prisma.itemType.findFirst({
 		where: {
 			isSystem: true,

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { MoreHorizontal, Plus, Star } from 'lucide-react';
+import { MoreHorizontal, Plus, Sparkles, Star } from 'lucide-react';
 import { Logo } from '@/components/home/Logo';
 import { NewItemDialog } from '@/components/items/NewItemDialog';
 import { NewCollectionDialog } from '@/components/collections/NewCollectionDialog';
@@ -15,7 +15,11 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export function TopBar() {
+interface TopBarProps {
+	isPro?: boolean;
+}
+
+export function TopBar({ isPro = false }: TopBarProps) {
 	const [newItemOpen, setNewItemOpen] = useState(false);
 	const [newCollectionOpen, setNewCollectionOpen] = useState(false);
 
@@ -32,6 +36,17 @@ export function TopBar() {
 			</div>
 
 			<div className='hidden items-center gap-2 md:flex'>
+				{!isPro && (
+					<Button
+						variant='ghost'
+						size='sm'
+						nativeButton={false}
+						render={<Link href='/upgrade' />}
+					>
+						<Sparkles className='mr-1 h-4 w-4' />
+						Upgrade
+					</Button>
+				)}
 				<Button
 					variant='ghost'
 					size='icon'
@@ -83,6 +98,12 @@ export function TopBar() {
 							<Star className='mr-2 h-4 w-4' />
 							Favorites
 						</DropdownMenuItem>
+						{!isPro && (
+							<DropdownMenuItem render={<Link href='/upgrade' />}>
+								<Sparkles className='mr-2 h-4 w-4' />
+								Upgrade
+							</DropdownMenuItem>
+						)}
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
