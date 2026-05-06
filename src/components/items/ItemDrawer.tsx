@@ -30,11 +30,13 @@ import { formatDate } from '@/lib/format';
 import { deleteItem, toggleItemFavorite, toggleItemPin, updateItem } from '@/actions/items';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
+import { SuggestTagsButton } from '@/components/items/SuggestTagsButton';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import {
 	DEFAULT_CODE_LANGUAGE,
 	getLanguageOptions,
 } from '@/lib/code-languages';
+import { appendTagToString, parseTagString } from '@/lib/tags';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -66,9 +68,10 @@ interface ItemDrawerProps {
 	itemId: string | null;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	isPro?: boolean;
 }
 
-export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
+export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDrawerProps) {
 	const router = useRouter();
 	const [item, setItem] = useState<ItemDetail | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -354,6 +357,7 @@ export function ItemDrawer({ itemId, open, onOpenChange }: ItemDrawerProps) {
 								item={item}
 								form={form}
 								onChange={setForm}
+								isPro={isPro}
 							/>
 						) : (
 						<div className="space-y-5 px-4 pb-6">
@@ -485,9 +489,10 @@ interface EditFormFieldsProps {
 	item: ItemDetail;
 	form: EditForm;
 	onChange: (form: EditForm) => void;
+	isPro: boolean;
 }
 
-function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
+function EditFormFields({ item, form, onChange, isPro }: EditFormFieldsProps) {
 	const typeName = item.itemType.name.toLowerCase();
 	const showContent = TEXT_TYPES.has(typeName);
 	const showLanguage = LANGUAGE_TYPES.has(typeName);
@@ -583,6 +588,16 @@ function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
 					value={form.tags}
 					onChange={(e) => set('tags', e.target.value)}
 					placeholder="comma, separated, tags"
+				/>
+				<SuggestTagsButton
+					isPro={isPro}
+					getDraft={() => ({
+						title: form.title,
+						description: form.description,
+						content: showContent ? form.content : null,
+					})}
+					existingTags={parseTagString(form.tags)}
+					onAdd={(tag) => set('tags', appendTagToString(form.tags, tag))}
 				/>
 			</div>
 

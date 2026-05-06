@@ -28,7 +28,7 @@ export default async function ItemsLayout({
 
 	return (
 		<EditorPreferencesLoader>
-			<ItemDrawerProvider>
+			<ItemDrawerProvider isPro={session.user.isPro}>
 				<CommandPaletteProvider>
 					<div className="flex min-h-screen flex-col">
 						<TopBar isPro={session.user.isPro} />

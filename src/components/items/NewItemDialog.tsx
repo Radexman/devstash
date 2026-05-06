@@ -18,9 +18,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
+import { SuggestTagsButton } from '@/components/items/SuggestTagsButton';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import { UpgradeButton } from '@/components/billing/UpgradeButton';
 import { createItem } from '@/actions/items';
+import { parseTagString, appendTagToString } from '@/lib/tags';
 import {
   CODE_LANGUAGES,
   DEFAULT_CODE_LANGUAGE,
@@ -61,9 +63,10 @@ const emptyForm: FormState = {
 interface NewItemDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  isPro?: boolean;
 }
 
-export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDialogProps = {}) {
+export function NewItemDialog({ open: controlledOpen, onOpenChange, isPro = false }: NewItemDialogProps = {}) {
   const router = useRouter();
   const isControlled = controlledOpen !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
@@ -244,6 +247,16 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange }: NewItemDia
               value={form.tags}
               onChange={(e) => set('tags', e.target.value)}
               placeholder="comma, separated, tags"
+            />
+            <SuggestTagsButton
+              isPro={isPro}
+              getDraft={() => ({
+                title: form.title,
+                description: form.description,
+                content: showContent ? form.content : null,
+              })}
+              existingTags={parseTagString(form.tags)}
+              onAdd={(tag) => set('tags', appendTagToString(form.tags, tag))}
             />
           </div>
 

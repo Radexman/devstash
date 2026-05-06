@@ -111,6 +111,7 @@ export function TopBar({ isPro = false }: TopBarProps) {
 			<NewItemDialog
 				open={newItemOpen}
 				onOpenChange={setNewItemOpen}
+				isPro={isPro}
 			/>
 			<NewCollectionDialog
 				open={newCollectionOpen}

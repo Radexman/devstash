@@ -43,6 +43,13 @@ export const rateLimiters = {
     limiter: Ratelimit.slidingWindow(3, "15 m"),
     prefix: "ratelimit:resend-verification",
   }),
+
+  /** AI features: 20 calls per user per hour */
+  ai: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(20, "1 h"),
+    prefix: "ratelimit:ai",
+  }),
 };
 
 /**
@@ -92,5 +99,31 @@ export async function checkRateLimit(
     // Fail open — allow the request if rate limiting is unavailable
     console.error("Rate limiting error (failing open):", error);
     return null;
+  }
+}
+
+export interface AiRateLimitResult {
+  ok: boolean;
+  retryAfterSeconds?: number;
+}
+
+/**
+ * Server-action-friendly rate limit check (returns a plain object, not a
+ * Response). Uses the shared `ai` limiter — 20 calls per user per hour.
+ * Fails open if Upstash is unreachable.
+ */
+export async function checkAiRateLimit(
+  userId: string,
+): Promise<AiRateLimitResult> {
+  try {
+    const { success, reset } = await rateLimiters.ai.limit(`u:${userId}`);
+    if (success) return { ok: true };
+    return {
+      ok: false,
+      retryAfterSeconds: Math.max(1, Math.ceil((reset - Date.now()) / 1000)),
+    };
+  } catch (error) {
+    console.error("AI rate limiting error (failing open):", error);
+    return { ok: true };
   }
 }
