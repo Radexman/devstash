@@ -9,10 +9,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   callbacks: {
-    jwt({ token, user }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.emailVerified = user.emailVerified;
+      }
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { isPro: true },
+        });
+        token.isPro = dbUser?.isPro ?? false;
       }
       return token;
     },
@@ -21,6 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
       }
       session.user.emailVerified = token.emailVerified as Date | null;
+      session.user.isPro = (token.isPro as boolean | undefined) ?? false;
       return session;
     },
   },

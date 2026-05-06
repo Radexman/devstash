@@ -1,12 +1,30 @@
-# Current Feature
+# Current Feature: Stripe Phase 1 — Core Infrastructure
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+- Add `stripePriceId` and `stripeCurrentPeriodEnd` columns to `User` via a new Prisma migration so Phase 2 can render renew/cancel UX.
+- Install the Stripe Node SDK and create `src/lib/stripe.ts` (singleton + pinned `apiVersion`, `STRIPE_PRICE_IDS` map, `BillingInterval` type, fail-fast on missing `STRIPE_SECRET_KEY`).
+- Create `src/lib/plan-limits.ts` with `FREE_LIMITS = { items: 50, collections: 3 }`, `getUsage`, and `canCreate`. Pro users always allowed.
+- Create `src/lib/db/billing.ts` with `getOrCreateStripeCustomerId`, `setSubscriptionState`, and `getBillingProfile` — all userId-/stripeCustomerId-scoped.
+- Wire `isPro` through NextAuth: JWT callback re-reads `isPro` from DB on every call, session callback mirrors it onto `session.user.isPro`.
+- Augment NextAuth types in `src/types/next-auth.d.ts` (Session.user.isPro: boolean, JWT.isPro?: boolean).
+- Required unit tests: `src/lib/plan-limits.test.ts` (pro/free × under/at/over for items + collections, `getUsage` shape) and `src/lib/db/billing.test.ts` (existing/create-and-store paths, `setSubscriptionState` write).
+- All 79 existing Vitest tests keep passing; `npm run build` and `npm run lint` clean.
+
 ## Notes
+
+- Spec: [context/features/stripe-phase-1-spec.md](context/features/stripe-phase-1-spec.md). Plan reference: [docs/stripe-integration-plan.md](docs/stripe-integration-plan.md) §§1, 2.6, 3.1 (first three files), 3.2 (auth + types), 6 (steps 1–2).
+- **Headless only.** No UI, no webhook, no Pro gating in createItem/createCollection — Phase 2 layers all of those on top.
+- Use `prisma migrate dev --name add_stripe_subscription_state` (never `db push`). Commit the generated SQL.
+- `setSubscriptionState` exists in this phase but has no caller — it's covered only by its unit test until the webhook lands in Phase 2.
+- Only `src/lib/stripe.ts` reads `process.env`; `plan-limits` and `db/billing` take the stripe client as an arg so tests can inject a mock.
+- The JWT callback gains one extra `findUnique({ select: { isPro: true } })` per call — intentional, because NextAuth's `trigger === 'update'` is unreliable for webhook-driven changes (see [context/research/stripe-integration-research.md](context/research/stripe-integration-research.md)).
+- Stripe SDK throws at import time if `STRIPE_SECRET_KEY` is unset — fail loudly in dev. A `sk_test_…` key is enough for Phase 1.
+- Existing prisma-mocking tests may need to add `findUnique({...select: { isPro: true }...})` returning `{ isPro: false }` if anything explodes after the JWT change.
 
 ## History
 
