@@ -12,9 +12,14 @@ type ActionResult<T> =
   | { success: false; error: string };
 
 const MAX_CONTENT_CHARS = 2000;
+const MAX_SUMMARY_CHARS = 280;
 const PRO_REQUIRED = 'AI features are Pro-only. Upgrade to Pro to enable.';
 
 const AUTO_TAG_INSTRUCTIONS = `You suggest 3-5 short, lowercase tags for a developer's saved item (snippet, prompt, command, note, or link). Tags should be 1-3 words, hyphenated, and describe the topic, technology, or use case (e.g. "react-hooks", "docker", "sql", "auth"). Return only JSON in the form {"tags": ["tag1", "tag2", ...]} — no prose, no preamble.`;
+
+const SUMMARY_INSTRUCTIONS = `You write a concise 1-2 sentence description for a developer's saved item (snippet, prompt, command, note, or link). The description summarizes what the item is and what it does or is used for. Output plain text only — no markdown, no quotes around the answer, no preamble. Stay under ${MAX_SUMMARY_CHARS} characters.`;
+
+const ITEM_TYPES = ['snippet', 'prompt', 'command', 'note', 'link'] as const;
 
 const generateAutoTagsSchema = z.object({
   title: z.string().trim().min(1, 'Title is required'),
@@ -93,6 +98,113 @@ function buildInput({
   // text.format.type: 'json_object', otherwise it 400s.
   parts.push('Respond with JSON: {"tags": ["tag1", "tag2", ...]}.');
   return parts.join('\n\n');
+}
+
+const generateSummarySchema = z.object({
+  title: z.string().trim().min(1, 'Title is required'),
+  type: z.enum(ITEM_TYPES).optional().catch(undefined),
+  content: z.string().nullish(),
+  url: z.string().nullish(),
+  language: z.string().nullish(),
+});
+
+export type GenerateSummaryPayload = z.input<typeof generateSummarySchema>;
+
+export async function generateSummary(
+  payload: GenerateSummaryPayload,
+): Promise<ActionResult<{ summary: string }>> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  const parsed = generateSummarySchema.safeParse(payload);
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const access = await canUseAi(session.user.id);
+  if (!access.allowed) {
+    return { success: false, error: PRO_REQUIRED };
+  }
+
+  const rl = await checkAiRateLimit(session.user.id);
+  if (!rl.ok) {
+    return {
+      success: false,
+      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
+    };
+  }
+
+  const input = buildSummaryInput(parsed.data);
+
+  try {
+    const response = await openai.responses.create({
+      model: AI_MODEL,
+      instructions: SUMMARY_INSTRUCTIONS,
+      input,
+      text: { format: { type: 'text' } },
+    });
+
+    const summary = cleanSummary(response.output_text);
+    if (!summary) {
+      return { success: false, error: 'AI returned no summary. Try again.' };
+    }
+
+    return { success: true, data: { summary } };
+  } catch (err) {
+    console.error('generateSummary failed', err);
+    return { success: false, error: mapOpenAiError(err) };
+  }
+}
+
+function buildSummaryInput({
+  title,
+  type,
+  content,
+  url,
+  language,
+}: {
+  title: string;
+  type?: (typeof ITEM_TYPES)[number];
+  content?: string | null;
+  url?: string | null;
+  language?: string | null;
+}): string {
+  const parts: string[] = [];
+  if (type) parts.push(`Type: ${type}`);
+  parts.push(`Title: ${title}`);
+  if (language && language.trim().length > 0 && language.trim() !== 'plaintext') {
+    parts.push(`Language: ${language.trim()}`);
+  }
+  if (url && url.trim().length > 0) {
+    parts.push(`URL: ${url.trim()}`);
+  }
+  if (content && content.trim().length > 0) {
+    parts.push(`Content:\n${truncate(content, MAX_CONTENT_CHARS)}`);
+  }
+  parts.push('Write a 1-2 sentence description.');
+  return parts.join('\n\n');
+}
+
+function cleanSummary(raw: string | undefined | null): string {
+  if (!raw) return '';
+  let s = raw.trim();
+  // Strip wrapping quotes if the model added any.
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith('“') && s.endsWith('”')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  // Collapse whitespace.
+  s = s.replace(/\s+/g, ' ');
+  if (s.length > MAX_SUMMARY_CHARS) {
+    s = `${s.slice(0, MAX_SUMMARY_CHARS - 1).trimEnd()}…`;
+  }
+  return s;
 }
 
 function truncate(s: string, max: number): string {

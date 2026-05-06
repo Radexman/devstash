@@ -29,7 +29,7 @@ vi.mock('@/lib/rate-limit', () => ({
 import { auth } from '@/auth';
 import { canUseAi } from '@/lib/ai-limits';
 import { checkAiRateLimit } from '@/lib/rate-limit';
-import { generateAutoTags } from './ai';
+import { generateAutoTags, generateSummary } from './ai';
 
 const mockAuth = vi.mocked(auth);
 const mockCanUseAi = vi.mocked(canUseAi);
@@ -236,6 +236,203 @@ describe('generateAutoTags', () => {
 	it('maps unknown errors to a generic failure', async () => {
 		mockCreate.mockRejectedValueOnce(new Error('network down'));
 		const res = await generateAutoTags({ title: 't' });
+		expect(res).toEqual({ success: false, error: 'AI request failed.' });
+	});
+});
+
+describe('generateSummary', () => {
+	it('rejects unauthorized', async () => {
+		mockAuth.mockResolvedValueOnce(null as never);
+		const res = await generateSummary({ title: 'react snippet' });
+		expect(res).toEqual({ success: false, error: 'Unauthorized' });
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('rejects empty title', async () => {
+		const res = await generateSummary({ title: '   ' });
+		expect(res.success).toBe(false);
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('rejects free users with the Pro-required message', async () => {
+		mockCanUseAi.mockResolvedValueOnce({ allowed: false, reason: 'not_pro' });
+		const res = await generateSummary({ title: 'react snippet' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI features are Pro-only. Upgrade to Pro to enable.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('returns rate-limited error with retry-after seconds', async () => {
+		mockCheckRl.mockResolvedValueOnce({ ok: false, retryAfterSeconds: 30 });
+		const res = await generateSummary({ title: 'react snippet' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Too many AI requests. Try again in 30s.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('returns a clean summary on success', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'A React hook for tracking counter state across renders.',
+		} as never);
+		const res = await generateSummary({
+			title: 'useState counter',
+			type: 'snippet',
+			content: 'const [count, setCount] = useState(0)',
+			language: 'typescript',
+		});
+		expect(res).toEqual({
+			success: true,
+			data: {
+				summary:
+					'A React hook for tracking counter state across renders.',
+			},
+		});
+	});
+
+	it('strips wrapping quotes from the model output', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: '"A docker run cheat sheet for spinning up containers."',
+		} as never);
+		const res = await generateSummary({ title: 'docker run' });
+		expect(res.success).toBe(true);
+		if (res.success) {
+			expect(res.data.summary).toBe(
+				'A docker run cheat sheet for spinning up containers.',
+			);
+		}
+	});
+
+	it('collapses whitespace and trims', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: '  Sentence one.\n\n   Sentence two.   ',
+		} as never);
+		const res = await generateSummary({ title: 't' });
+		expect(res.success).toBe(true);
+		if (res.success) {
+			expect(res.data.summary).toBe('Sentence one. Sentence two.');
+		}
+	});
+
+	it('caps the summary at 280 characters', async () => {
+		const longText = 'word '.repeat(200).trim();
+		mockCreate.mockResolvedValueOnce({
+			output_text: longText,
+		} as never);
+		const res = await generateSummary({ title: 't' });
+		expect(res.success).toBe(true);
+		if (res.success) {
+			expect(res.data.summary.length).toBeLessThanOrEqual(280);
+			expect(res.data.summary.endsWith('…')).toBe(true);
+		}
+	});
+
+	it('returns "no summary" error when output_text is empty', async () => {
+		mockCreate.mockResolvedValueOnce({ output_text: '' } as never);
+		const res = await generateSummary({ title: 't' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI returned no summary. Try again.',
+		});
+	});
+
+	it('returns "no summary" error when output_text is missing', async () => {
+		mockCreate.mockResolvedValueOnce({} as never);
+		const res = await generateSummary({ title: 't' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI returned no summary. Try again.',
+		});
+	});
+
+	it('truncates content to 2000 chars before sending', async () => {
+		const huge = 'x'.repeat(5000);
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'ok',
+		} as never);
+		await generateSummary({ title: 't', content: huge });
+		const arg = mockCreate.mock.calls[0]?.[0] as { input: string };
+		expect(arg.input.length).toBeLessThan(huge.length);
+		expect(arg.input).toContain('[truncated]');
+	});
+
+	it('omits optional fields when blank or missing', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'ok',
+		} as never);
+		await generateSummary({
+			title: 't',
+			content: '   ',
+			url: '',
+			language: 'plaintext',
+		});
+		const arg = mockCreate.mock.calls[0]?.[0] as { input: string };
+		expect(arg.input).not.toContain('Content:');
+		expect(arg.input).not.toContain('URL:');
+		expect(arg.input).not.toContain('Language:');
+	});
+
+	it('includes optional fields when populated', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'ok',
+		} as never);
+		await generateSummary({
+			title: 'docker run',
+			type: 'command',
+			content: 'docker run -p 3000:3000 myimage',
+			language: 'bash',
+		});
+		const arg = mockCreate.mock.calls[0]?.[0] as { input: string };
+		expect(arg.input).toContain('Type: command');
+		expect(arg.input).toContain('Title: docker run');
+		expect(arg.input).toContain('Language: bash');
+		expect(arg.input).toContain('Content:');
+	});
+
+	it('uses text format and the AI_MODEL constant', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: 'ok',
+		} as never);
+		await generateSummary({ title: 't' });
+		const arg = mockCreate.mock.calls[0]?.[0] as Record<string, unknown>;
+		expect(arg.model).toBe('gpt-5-nano');
+		expect(arg.text).toEqual({ format: { type: 'text' } });
+		expect(arg.instructions).toMatch(/1-2 sentence/);
+	});
+
+	it('maps OpenAI 429 to rate-limit message', async () => {
+		mockCreate.mockRejectedValueOnce(makeApiError(429));
+		const res = await generateSummary({ title: 't' });
+		expect(res).toEqual({
+			success: false,
+			error: 'OpenAI is rate-limited. Try again shortly.',
+		});
+	});
+
+	it('maps OpenAI 401 to credentials message', async () => {
+		mockCreate.mockRejectedValueOnce(makeApiError(401));
+		const res = await generateSummary({ title: 't' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI credentials are not configured.',
+		});
+	});
+
+	it('maps OpenAI 5xx to "having a moment"', async () => {
+		mockCreate.mockRejectedValueOnce(makeApiError(503));
+		const res = await generateSummary({ title: 't' });
+		expect(res).toEqual({
+			success: false,
+			error: 'OpenAI is having a moment. Try again.',
+		});
+	});
+
+	it('maps unknown errors to a generic failure', async () => {
+		mockCreate.mockRejectedValueOnce(new Error('network down'));
+		const res = await generateSummary({ title: 't' });
 		expect(res).toEqual({ success: false, error: 'AI request failed.' });
 	});
 });
