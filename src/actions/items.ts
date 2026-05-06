@@ -11,6 +11,7 @@ import {
   type ItemDetail,
 } from '@/lib/db/items';
 import { getUserCollectionIds } from '@/lib/db/collections';
+import { canCreate } from '@/lib/plan-limits';
 
 const ITEM_TYPES = ['snippet', 'prompt', 'command', 'note', 'link'] as const;
 type CreateItemType = (typeof ITEM_TYPES)[number];
@@ -159,6 +160,14 @@ export async function createItem(
   if (!parsed.success) {
     const first = parsed.error.issues[0];
     return { success: false, error: first?.message ?? 'Invalid input' };
+  }
+
+  const limit = await canCreate(session.user.id, 'items');
+  if (!limit.allowed) {
+    return {
+      success: false,
+      error: `Free plan limit of ${limit.limit} items reached. Upgrade to Pro for unlimited.`,
+    };
   }
 
   const { type, ...rest } = parsed.data;

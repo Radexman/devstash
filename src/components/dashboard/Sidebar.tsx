@@ -13,6 +13,7 @@ import {
 	Settings,
 	User as UserIcon,
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
 	Tooltip,
@@ -37,6 +38,7 @@ interface UserInfo {
 	name?: string | null;
 	email?: string | null;
 	image?: string | null;
+	isPro?: boolean;
 }
 
 interface SidebarProps {
@@ -199,9 +201,25 @@ function SidebarContent({
 				{collapsed ? (
 					<DropdownMenu>
 						<DropdownMenuTrigger className="flex items-center justify-center w-full">
-							<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8" />
+							<div className="relative">
+								<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8" />
+								{user?.isPro && (
+									<span
+										aria-label="Pro user"
+										className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border border-sidebar bg-indigo-500"
+									/>
+								)}
+							</div>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent side="right" align="end">
+							{user?.isPro && (
+								<div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
+									<span>Plan</span>
+									<Badge className="h-4 bg-indigo-500 px-1.5 text-[10px] font-semibold tracking-wide text-white">
+										PRO
+									</Badge>
+								</div>
+							)}
 							<DropdownMenuItem
 								render={<Link href="/profile" />}
 							>
@@ -229,11 +247,26 @@ function SidebarContent({
 						>
 							<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8 shrink-0" />
 							<div className="flex-1 min-w-0 text-left">
-								<p className="truncate text-sm font-medium">{user?.name ?? 'User'}</p>
+								<div className="flex items-center gap-1.5">
+									<p className="truncate text-sm font-medium">{user?.name ?? 'User'}</p>
+									{user?.isPro && (
+										<Badge className="h-4 shrink-0 bg-indigo-500 px-1.5 text-[10px] font-semibold tracking-wide text-white">
+											PRO
+										</Badge>
+									)}
+								</div>
 								<p className="truncate text-xs text-muted-foreground">{user?.email}</p>
 							</div>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent side="top" align="start" className="w-48">
+							{user?.isPro && (
+								<div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
+									<span>Plan</span>
+									<Badge className="h-4 bg-indigo-500 px-1.5 text-[10px] font-semibold tracking-wide text-white">
+										PRO
+									</Badge>
+								</div>
+							)}
 							<DropdownMenuItem
 								render={<Link href="/profile" />}
 							>
