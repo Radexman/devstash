@@ -19,6 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { SuggestTagsButton } from '@/components/items/SuggestTagsButton';
+import { SuggestSummaryButton } from '@/components/items/SuggestSummaryButton';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import { UpgradeButton } from '@/components/billing/UpgradeButton';
 import { createItem } from '@/actions/items';
@@ -181,7 +182,20 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange, isPro = fals
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="new-item-description">Description</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="new-item-description">Description</Label>
+              <SuggestSummaryButton
+                isPro={isPro}
+                getDraft={() => ({
+                  title: form.title,
+                  type: form.type,
+                  content: showContent ? form.content : null,
+                  url: showUrl ? form.url : null,
+                  language: showLanguage ? form.language : null,
+                })}
+                onSummary={(summary) => set('description', summary)}
+              />
+            </div>
             <Textarea
               id="new-item-description"
               value={form.description}

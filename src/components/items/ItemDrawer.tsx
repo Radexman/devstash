@@ -31,6 +31,8 @@ import { deleteItem, toggleItemFavorite, toggleItemPin, updateItem } from '@/act
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { SuggestTagsButton } from '@/components/items/SuggestTagsButton';
+import { SuggestSummaryButton } from '@/components/items/SuggestSummaryButton';
+import type { GenerateSummaryPayload } from '@/actions/ai';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import {
 	DEFAULT_CODE_LANGUAGE,
@@ -525,7 +527,20 @@ function EditFormFields({ item, form, onChange, isPro }: EditFormFieldsProps) {
 			</div>
 
 			<div className="space-y-1.5">
-				<Label htmlFor="item-description">Description</Label>
+				<div className="flex items-center justify-between gap-2">
+					<Label htmlFor="item-description">Description</Label>
+					<SuggestSummaryButton
+						isPro={isPro}
+						getDraft={(): GenerateSummaryPayload => ({
+							title: form.title,
+							type: typeName as GenerateSummaryPayload['type'],
+							content: showContent ? form.content : null,
+							url: showUrl ? form.url : null,
+							language: showLanguage ? form.language : null,
+						})}
+						onSummary={(summary) => set('description', summary)}
+					/>
+				</div>
 				<Textarea
 					id="item-description"
 					value={form.description}
