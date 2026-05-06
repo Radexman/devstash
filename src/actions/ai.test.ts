@@ -26,15 +26,40 @@ vi.mock('@/lib/rate-limit', () => ({
 	checkAiRateLimit: vi.fn(),
 }));
 
+vi.mock('@/lib/db/items', () => ({
+	getItemDetail: vi.fn(),
+}));
+
 import { auth } from '@/auth';
 import { canUseAi } from '@/lib/ai-limits';
 import { checkAiRateLimit } from '@/lib/rate-limit';
-import { generateAutoTags, generateSummary } from './ai';
+import { getItemDetail } from '@/lib/db/items';
+import { explainCode, generateAutoTags, generateSummary } from './ai';
 
 const mockAuth = vi.mocked(auth);
 const mockCanUseAi = vi.mocked(canUseAi);
 const mockCheckRl = vi.mocked(checkAiRateLimit);
 const mockCreate = vi.mocked(mockOpenai.responses.create);
+const mockGetItemDetail = vi.mocked(getItemDetail);
+
+interface MockItem {
+	id: string;
+	title: string;
+	content: string | null;
+	language: string | null;
+	itemType: { name: string };
+}
+
+function buildItem(overrides: Partial<MockItem> = {}): MockItem {
+	return {
+		id: 'item-1',
+		title: 'useState counter',
+		content: 'const [count, setCount] = useState(0)',
+		language: 'typescript',
+		itemType: { name: 'Snippet' },
+		...overrides,
+	};
+}
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -42,6 +67,7 @@ beforeEach(() => {
 	mockAuth.mockResolvedValue({ user: { id: 'u1' } });
 	mockCanUseAi.mockResolvedValue({ allowed: true });
 	mockCheckRl.mockResolvedValue({ ok: true });
+	mockGetItemDetail.mockResolvedValue(buildItem() as never);
 	vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
@@ -433,6 +459,201 @@ describe('generateSummary', () => {
 	it('maps unknown errors to a generic failure', async () => {
 		mockCreate.mockRejectedValueOnce(new Error('network down'));
 		const res = await generateSummary({ title: 't' });
+		expect(res).toEqual({ success: false, error: 'AI request failed.' });
+	});
+});
+
+describe('explainCode', () => {
+	it('rejects unauthorized', async () => {
+		mockAuth.mockResolvedValueOnce(null as never);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({ success: false, error: 'Unauthorized' });
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('rejects empty itemId', async () => {
+		const res = await explainCode({ itemId: '   ' });
+		expect(res.success).toBe(false);
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('rejects free users with the Pro-required message', async () => {
+		mockCanUseAi.mockResolvedValueOnce({ allowed: false, reason: 'not_pro' });
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI features are Pro-only. Upgrade to Pro to enable.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('returns rate-limited error with retry-after seconds', async () => {
+		mockCheckRl.mockResolvedValueOnce({ ok: false, retryAfterSeconds: 17 });
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Too many AI requests. Try again in 17s.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+		expect(mockGetItemDetail).not.toHaveBeenCalled();
+	});
+
+	it('returns "not found" when getItemDetail returns null (foreign id)', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(null);
+		const res = await explainCode({ itemId: 'someone-elses' });
+		expect(res).toEqual({ success: false, error: 'Item not found' });
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('rejects non-explainable types (note/prompt/link)', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildItem({ itemType: { name: 'Note' } }) as never,
+		);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Only snippets and commands can be explained.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('rejects items with empty content', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildItem({ content: '   ' }) as never,
+		);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'Item has no code to explain.',
+		});
+		expect(mockCreate).not.toHaveBeenCalled();
+	});
+
+	it('re-fetches item with the session userId (ownership check)', async () => {
+		mockCreate.mockResolvedValueOnce({ output_text: 'ok' } as never);
+		await explainCode({ itemId: 'item-1' });
+		expect(mockGetItemDetail).toHaveBeenCalledWith('item-1', 'u1');
+	});
+
+	it('returns the explanation on success', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text:
+				'Initializes a counter state hook.\n\n- Uses `useState`\n- Returns `[value, setter]`',
+		} as never);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: true,
+			data: {
+				explanation:
+					'Initializes a counter state hook.\n\n- Uses `useState`\n- Returns `[value, setter]`',
+			},
+		});
+	});
+
+	it('trims whitespace from the model output', async () => {
+		mockCreate.mockResolvedValueOnce({
+			output_text: '\n\n  Explanation here.  \n\n',
+		} as never);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res.success).toBe(true);
+		if (res.success) expect(res.data.explanation).toBe('Explanation here.');
+	});
+
+	it('returns "no explanation" error when output_text is empty', async () => {
+		mockCreate.mockResolvedValueOnce({ output_text: '' } as never);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI returned no explanation. Try again.',
+		});
+	});
+
+	it('returns "no explanation" error when output_text is missing', async () => {
+		mockCreate.mockResolvedValueOnce({} as never);
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI returned no explanation. Try again.',
+		});
+	});
+
+	it('truncates code to 2000 chars before sending', async () => {
+		const huge = 'x'.repeat(5000);
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildItem({ content: huge }) as never,
+		);
+		mockCreate.mockResolvedValueOnce({ output_text: 'ok' } as never);
+		await explainCode({ itemId: 'item-1' });
+		const arg = mockCreate.mock.calls[0]?.[0] as { input: string };
+		expect(arg.input.length).toBeLessThan(huge.length);
+		expect(arg.input).toContain('[truncated]');
+	});
+
+	it('omits Language line when language is plaintext or null', async () => {
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildItem({ language: 'plaintext' }) as never,
+		);
+		mockCreate.mockResolvedValueOnce({ output_text: 'ok' } as never);
+		await explainCode({ itemId: 'item-1' });
+		const arg1 = mockCreate.mock.calls[0]?.[0] as { input: string };
+		expect(arg1.input).not.toContain('Language:');
+
+		mockGetItemDetail.mockResolvedValueOnce(
+			buildItem({ language: null }) as never,
+		);
+		mockCreate.mockResolvedValueOnce({ output_text: 'ok' } as never);
+		await explainCode({ itemId: 'item-1' });
+		const arg2 = mockCreate.mock.calls[1]?.[0] as { input: string };
+		expect(arg2.input).not.toContain('Language:');
+	});
+
+	it('uses text format, AI_MODEL, and explain instructions', async () => {
+		mockCreate.mockResolvedValueOnce({ output_text: 'ok' } as never);
+		await explainCode({ itemId: 'item-1' });
+		const arg = mockCreate.mock.calls[0]?.[0] as Record<string, unknown>;
+		expect(arg.model).toBe('gpt-5-nano');
+		expect(arg.text).toEqual({ format: { type: 'text' } });
+		expect(arg.instructions).toMatch(/explain/i);
+		const input = arg.input as string;
+		expect(input).toContain('Type: snippet');
+		expect(input).toContain('Title: useState counter');
+		expect(input).toContain('Language: typescript');
+		expect(input).toContain('Code:');
+	});
+
+	it('maps OpenAI 429 to rate-limit message', async () => {
+		mockCreate.mockRejectedValueOnce(makeApiError(429));
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'OpenAI is rate-limited. Try again shortly.',
+		});
+	});
+
+	it('maps OpenAI 401 to credentials message', async () => {
+		mockCreate.mockRejectedValueOnce(makeApiError(401));
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'AI credentials are not configured.',
+		});
+	});
+
+	it('maps OpenAI 5xx to "having a moment"', async () => {
+		mockCreate.mockRejectedValueOnce(makeApiError(503));
+		const res = await explainCode({ itemId: 'item-1' });
+		expect(res).toEqual({
+			success: false,
+			error: 'OpenAI is having a moment. Try again.',
+		});
+	});
+
+	it('maps unknown errors to a generic failure', async () => {
+		mockCreate.mockRejectedValueOnce(new Error('network down'));
+		const res = await explainCode({ itemId: 'item-1' });
 		expect(res).toEqual({ success: false, error: 'AI request failed.' });
 	});
 });
