@@ -241,66 +241,6 @@ Focus on readability and maintainability over cleverness.`,
     },
   ]);
 
-  // DevOps
-  await seedCollection(
-    "DevOps",
-    "Infrastructure and deployment resources",
-    {},
-    [
-      {
-        title: "Multi-stage Dockerfile",
-        contentType: "text",
-        typeName: "snippet",
-        language: "dockerfile",
-        content: `FROM node:22-alpine AS base
-WORKDIR /app
-COPY package*.json ./
-
-FROM base AS deps
-RUN npm ci --omit=dev
-
-FROM base AS build
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM node:22-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
-COPY --from=build /app/package.json ./
-
-EXPOSE 3000
-CMD ["npm", "start"]`,
-      },
-      {
-        title: "Deploy to production",
-        contentType: "text",
-        typeName: "command",
-        content: `# Build and deploy with zero downtime
-docker compose -f docker-compose.prod.yml build --no-cache
-docker compose -f docker-compose.prod.yml up -d --remove-orphans
-docker compose -f docker-compose.prod.yml exec app npx prisma migrate deploy
-docker system prune -f`,
-      },
-      {
-        title: "Vercel Documentation",
-        contentType: "url",
-        typeName: "link",
-        url: "https://vercel.com/docs",
-        isFavorite: true,
-      },
-      {
-        title: "GitHub Actions Documentation",
-        contentType: "url",
-        typeName: "link",
-        url: "https://docs.github.com/en/actions",
-      },
-    ]
-  );
-
   // Terminal Commands
   await seedCollection(
     "Terminal Commands",
@@ -371,42 +311,6 @@ npm explain package-name
 
 # Clean npm cache
 npm cache clean --force`,
-      },
-    ]
-  );
-
-  // Design Resources
-  await seedCollection(
-    "Design Resources",
-    "UI/UX resources and references",
-    {},
-    [
-      {
-        title: "Tailwind CSS Documentation",
-        contentType: "url",
-        typeName: "link",
-        url: "https://tailwindcss.com/docs",
-        isFavorite: true,
-        isPinned: true,
-      },
-      {
-        title: "shadcn/ui Components",
-        contentType: "url",
-        typeName: "link",
-        url: "https://ui.shadcn.com/docs/components",
-        isFavorite: true,
-      },
-      {
-        title: "Radix UI Primitives",
-        contentType: "url",
-        typeName: "link",
-        url: "https://www.radix-ui.com/primitives/docs/overview/introduction",
-      },
-      {
-        title: "Lucide Icons",
-        contentType: "url",
-        typeName: "link",
-        url: "https://lucide.dev/icons",
       },
     ]
   );
