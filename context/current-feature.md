@@ -2,11 +2,18 @@
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+Replace the free-text Language input with a Monaco-aware dropdown, placed above the Content editor in both NewItemDialog and ItemDrawer's edit form. Picking a language should switch syntax highlighting in the live editor immediately.
+
 ## Notes
+
+- New shared `src/lib/code-languages.ts` holds a curated list of Monaco language IDs + display labels.
+- Default language for new snippet/command items is `plaintext` so the editor renders cleanly before the user picks.
+- Existing items with custom language values (anything not in the curated list) should still render — prepend the unknown value as a synthetic option so we don't quietly lose data.
+- Native `<select>` styled like the existing Type dropdown in NewItemDialog (no new shadcn primitive needed).
 
 ## History
 

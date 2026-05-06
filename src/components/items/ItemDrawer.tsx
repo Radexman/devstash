@@ -31,6 +31,10 @@ import { deleteItem, toggleItemFavorite, toggleItemPin, updateItem } from '@/act
 import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
+import {
+	DEFAULT_CODE_LANGUAGE,
+	getLanguageOptions,
+} from '@/lib/code-languages';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -52,7 +56,7 @@ function toEditForm(item: ItemDetail): EditForm {
 		description: item.description ?? '',
 		content: item.content ?? '',
 		url: item.url ?? '',
-		language: item.language ?? '',
+		language: item.language ?? DEFAULT_CODE_LANGUAGE,
 		tags: item.tags.map((t) => t.name).join(', '),
 		collectionIds: item.collections.map((c) => c.id),
 	};
@@ -525,13 +529,31 @@ function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
 				/>
 			</div>
 
+			{showLanguage && (
+				<div className="space-y-1.5">
+					<Label htmlFor="item-language">Language</Label>
+					<select
+						id="item-language"
+						value={form.language}
+						onChange={(e) => set('language', e.target.value)}
+						className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+					>
+						{getLanguageOptions(form.language).map((lang) => (
+							<option key={lang.value} value={lang.value}>
+								{lang.label}
+							</option>
+						))}
+					</select>
+				</div>
+			)}
+
 			{showContent && (
 				<div className="space-y-1.5">
 					<Label htmlFor="item-content">Content</Label>
 					{showLanguage ? (
 						<CodeEditor
 							value={form.content}
-							language={form.language || 'plaintext'}
+							language={form.language || DEFAULT_CODE_LANGUAGE}
 							onChange={(v) => set('content', v)}
 						/>
 					) : (
@@ -540,17 +562,6 @@ function EditFormFields({ item, form, onChange }: EditFormFieldsProps) {
 							onChange={(v) => set('content', v)}
 						/>
 					)}
-				</div>
-			)}
-
-			{showLanguage && (
-				<div className="space-y-1.5">
-					<Label htmlFor="item-language">Language</Label>
-					<Input
-						id="item-language"
-						value={form.language}
-						onChange={(e) => set('language', e.target.value)}
-					/>
 				</div>
 			)}
 
