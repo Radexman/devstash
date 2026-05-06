@@ -235,6 +235,32 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 		}
 	};
 
+	const handleAcceptOptimized = async (optimized: string): Promise<boolean> => {
+		if (!item) return false;
+		const result = await updateItem(item.id, {
+			title: item.title,
+			description: item.description,
+			content: optimized,
+			url: item.url,
+			language: item.language,
+			tags: item.tags.map((t) => t.name),
+			collectionIds: item.collections.map((c) => c.id),
+		});
+		if (!result.success) {
+			toast.error(result.error);
+			return false;
+		}
+		const updated = result.data;
+		setItem({
+			...updated,
+			createdAt: new Date(updated.createdAt),
+			updatedAt: new Date(updated.updatedAt),
+		});
+		toast.success('Prompt optimized');
+		router.refresh();
+		return true;
+	};
+
 	const Icon = item ? iconMap[item.itemType.icon] : null;
 	const typeName = item ? item.itemType.name.toLowerCase() : '';
 
@@ -440,6 +466,15 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 										<MarkdownEditor
 											value={item.content}
 											readOnly
+											optimize={
+												typeName === 'prompt'
+													? {
+															itemId: item.id,
+															isPro,
+															onAccept: handleAcceptOptimized,
+													  }
+													: undefined
+											}
 										/>
 									)}
 								</div>
