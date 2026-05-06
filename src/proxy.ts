@@ -15,7 +15,8 @@ export const proxy = auth((req) => {
     pathname.startsWith("/settings") ||
     pathname.startsWith("/items") ||
     pathname.startsWith("/collections") ||
-    pathname.startsWith("/favorites");
+    pathname.startsWith("/favorites") ||
+    pathname.startsWith("/upgrade");
 
   if (isProtected && !isLoggedIn) {
     return Response.redirect(new URL("/sign-in", req.nextUrl));
@@ -42,5 +43,6 @@ export const config = {
     "/items/:path*",
     "/collections/:path*",
     "/favorites/:path*",
+    "/upgrade/:path*",
   ],
 };

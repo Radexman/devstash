@@ -2,11 +2,22 @@
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+Give free users a clear path to upgrade.
+
+- Add a subtle "Upgrade" ghost button in the dashboard TopBar, visible only to free users.
+- New `/upgrade` page that mirrors the homepage pricing area: monthly/yearly toggle, free vs pro feature lists, and direct Stripe checkout via the existing `UpgradeButton`.
+- Send free users hitting the legacy `/items/files` and `/items/images` paths to `/upgrade` instead of the current 404.
+
 ## Notes
+
+- Reuse `PricingPlans` from `src/components/home/`; it already handles the period toggle, free/pro card layout, and routes free users through `UpgradeButton`.
+- TopBar is a client component — thread `isPro` through the four layouts that mount it (dashboard, items, collections, favorites).
+- `/upgrade` uses a focused shell (Back to Dashboard link), like `/settings`.
+- Files/Images redirect happens at the page level so it covers anyone — pro users land on `/upgrade` and see "Current plan".
 
 ## History
 

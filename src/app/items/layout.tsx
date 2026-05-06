@@ -31,7 +31,7 @@ export default async function ItemsLayout({
 			<ItemDrawerProvider>
 				<CommandPaletteProvider>
 					<div className="flex min-h-screen flex-col">
-						<TopBar />
+						<TopBar isPro={session.user.isPro} />
 						<div className="flex flex-1 overflow-hidden">
 							<Sidebar
 								itemTypes={itemTypes}
