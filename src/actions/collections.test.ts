@@ -12,7 +12,7 @@ vi.mock('@/lib/db/collections', () => ({
 }));
 
 vi.mock('@/lib/plan-limits', () => ({
-  canCreate: vi.fn(),
+  checkCreateLimit: vi.fn(),
 }));
 
 import { auth } from '@/auth';
@@ -23,7 +23,7 @@ import {
   toggleCollectionFavorite as toggleCollectionFavoriteQuery,
   type CollectionSummary,
 } from '@/lib/db/collections';
-import { canCreate } from '@/lib/plan-limits';
+import { checkCreateLimit } from '@/lib/plan-limits';
 import {
   createCollection,
   updateCollection,
@@ -36,7 +36,7 @@ const mockCreate = vi.mocked(createCollectionQuery);
 const mockUpdate = vi.mocked(updateCollectionQuery);
 const mockDelete = vi.mocked(deleteCollectionQuery);
 const mockToggleFavorite = vi.mocked(toggleCollectionFavoriteQuery);
-const mockCanCreate = vi.mocked(canCreate);
+const mockCheckCreateLimit = vi.mocked(checkCreateLimit);
 
 const fakeCollection: CollectionSummary = {
   id: 'c1',
@@ -51,7 +51,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   // @ts-expect-error partial session
   mockAuth.mockResolvedValue({ user: { id: 'u1' } });
-  mockCanCreate.mockResolvedValue({ allowed: true, used: 0, limit: 3 });
+  mockCheckCreateLimit.mockResolvedValue({ ok: true });
 });
 
 describe('createCollection action', () => {
@@ -70,11 +70,10 @@ describe('createCollection action', () => {
   });
 
   it('returns limit-reached error and skips create when at the free plan cap', async () => {
-    mockCanCreate.mockResolvedValueOnce({
-      allowed: false,
-      reason: 'limit_reached',
-      used: 3,
-      limit: 3,
+    mockCheckCreateLimit.mockResolvedValueOnce({
+      ok: false,
+      error:
+        'Free plan limit of 3 collections reached. Upgrade to Pro for unlimited.',
     });
     const res = await createCollection({
       name: 'React Patterns',

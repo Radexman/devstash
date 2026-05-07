@@ -2,11 +2,30 @@
 
 ## Status
 
-Not Started
+In Progress
 
 ## Goals
 
+Refactor `src/actions/**` to remove duplication identified by the refactor-scanner. Two layers:
+
+**Quick Wins (≤1h, low risk)**
+
+1. **Shared `ActionResult<T>`** — same 3-line discriminated union duplicated in `billing.ts:9-11`, `collections.ts:26-28`, `items.ts:61-63`, `ai.ts:11-13`, `editor-preferences.ts:10-12`. Move to `src/types/action.ts`; the 5 files import instead of redeclaring.
+2. **`parseOrFail(schema, payload)`** in `src/lib/action-helpers.ts` — replaces 10 occurrences of the identical 4-line `safeParse → issues[0]?.message → fallback` block across all 5 files.
+3. **`requireUserId()`** in `src/lib/action-helpers.ts` — replaces 14 occurrences of the identical `auth() → !session?.user?.id → return Unauthorized` preamble. Drop-in shrinkage, no API change.
+4. **`aiGate(userId)`** in `src/lib/action-helpers.ts` (or co-located with the AI action) — replaces 4× identical 11-line `canUseAi → PRO_REQUIRED → checkAiRateLimit → retry message` block in `ai.ts:53-64, 134-145, 218-229, 321-332`. Also closes the risk of forgetting the rate-limit on a future 5th AI action.
+
+**Medium (1–4h)**
+
+5. **Shared item Zod schema fields** in `src/lib/schemas/item.ts` — `createItemSchema` and `updateItemSchema` in `items.ts` overlap by ~80% (verbatim 17-line URL refine block, identical description/content/language/tags/collectionIds chains). Extract `itemBaseFields` and re-derive both schemas from it.
+6. **`checkCreateLimit(userId, name)`** added to `src/lib/plan-limits.ts` — collapses the 6-line `canCreate → !allowed → 'Free plan limit of {N} {name} reached. Upgrade to Pro for unlimited.'` block in `items.ts:165-171` and `collections.ts:44-50`. Centralises the literal that the dialogs match against (`startsWith('Free plan limit')`).
+
 ## Notes
+
+- Read-only audit reported "High" duplication density in `src/actions`. Implementing 1–4 deletes ~110 duplicated lines across 5 files in ~75 min.
+- All existing public action signatures stay the same; only internals shrink. Tests in `src/actions/*.test.ts` should keep passing without rewrites (the `Unauthorized` / `Free plan limit ...` / Zod issue messages remain identical).
+- No DB / schema changes. No new env vars.
+- Do **not** introduce a `withAuthAction` HOF — call-site type inference is better with the simpler trio (`requireUserId` + `parseOrFail` + `aiGate`).
 
 ## History
 

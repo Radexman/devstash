@@ -50,3 +50,19 @@ export async function canCreate(
     limit,
   };
 }
+
+export type CheckCreateLimitResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function checkCreateLimit(
+  userId: string,
+  name: LimitName,
+): Promise<CheckCreateLimitResult> {
+  const limit = await canCreate(userId, name);
+  if (limit.allowed) return { ok: true };
+  return {
+    ok: false,
+    error: `Free plan limit of ${limit.limit} ${name} reached. Upgrade to Pro for unlimited.`,
+  };
+}

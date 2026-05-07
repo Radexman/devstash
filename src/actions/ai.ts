@@ -2,19 +2,13 @@
 
 import { z } from 'zod';
 import OpenAI from 'openai';
-import { auth } from '@/auth';
 import { openai, AI_MODEL } from '@/lib/openai';
-import { canUseAi } from '@/lib/ai-limits';
-import { checkAiRateLimit } from '@/lib/rate-limit';
 import { getItemDetail } from '@/lib/db/items';
-
-type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+import { aiGate, parseOrFail, requireUserId } from '@/lib/action-helpers';
+import type { ActionResult } from '@/types/action';
 
 const MAX_CONTENT_CHARS = 2000;
 const MAX_SUMMARY_CHARS = 280;
-const PRO_REQUIRED = 'AI features are Pro-only. Upgrade to Pro to enable.';
 
 const AUTO_TAG_INSTRUCTIONS = `You suggest 3-5 short, lowercase tags for a developer's saved item (snippet, prompt, command, note, or link). Tags should be 1-3 words, hyphenated, and describe the topic, technology, or use case (e.g. "react-hooks", "docker", "sql", "auth"). Return only JSON in the form {"tags": ["tag1", "tag2", ...]} — no prose, no preamble.`;
 
@@ -39,29 +33,14 @@ export type GenerateAutoTagsPayload = z.input<typeof generateAutoTagsSchema>;
 export async function generateAutoTags(
   payload: GenerateAutoTagsPayload,
 ): Promise<ActionResult<{ tags: string[] }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const session = await requireUserId();
+  if (!session.ok) return { success: false, error: session.error };
 
-  const parsed = generateAutoTagsSchema.safeParse(payload);
-  if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { success: false, error: first?.message ?? 'Invalid input' };
-  }
+  const parsed = parseOrFail(generateAutoTagsSchema, payload);
+  if (!parsed.ok) return { success: false, error: parsed.error };
 
-  const access = await canUseAi(session.user.id);
-  if (!access.allowed) {
-    return { success: false, error: PRO_REQUIRED };
-  }
-
-  const rl = await checkAiRateLimit(session.user.id);
-  if (!rl.ok) {
-    return {
-      success: false,
-      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
-    };
-  }
+  const gate = await aiGate(session.userId);
+  if (!gate.ok) return { success: false, error: gate.error };
 
   const input = buildInput(parsed.data);
 
@@ -120,29 +99,14 @@ export type GenerateSummaryPayload = z.input<typeof generateSummarySchema>;
 export async function generateSummary(
   payload: GenerateSummaryPayload,
 ): Promise<ActionResult<{ summary: string }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const session = await requireUserId();
+  if (!session.ok) return { success: false, error: session.error };
 
-  const parsed = generateSummarySchema.safeParse(payload);
-  if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { success: false, error: first?.message ?? 'Invalid input' };
-  }
+  const parsed = parseOrFail(generateSummarySchema, payload);
+  if (!parsed.ok) return { success: false, error: parsed.error };
 
-  const access = await canUseAi(session.user.id);
-  if (!access.allowed) {
-    return { success: false, error: PRO_REQUIRED };
-  }
-
-  const rl = await checkAiRateLimit(session.user.id);
-  if (!rl.ok) {
-    return {
-      success: false,
-      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
-    };
-  }
+  const gate = await aiGate(session.userId);
+  if (!gate.ok) return { success: false, error: gate.error };
 
   const input = buildSummaryInput(parsed.data);
 
@@ -204,33 +168,18 @@ export type ExplainCodePayload = z.input<typeof explainCodeSchema>;
 export async function explainCode(
   payload: ExplainCodePayload,
 ): Promise<ActionResult<{ explanation: string }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const session = await requireUserId();
+  if (!session.ok) return { success: false, error: session.error };
 
-  const parsed = explainCodeSchema.safeParse(payload);
-  if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { success: false, error: first?.message ?? 'Invalid input' };
-  }
+  const parsed = parseOrFail(explainCodeSchema, payload);
+  if (!parsed.ok) return { success: false, error: parsed.error };
 
-  const access = await canUseAi(session.user.id);
-  if (!access.allowed) {
-    return { success: false, error: PRO_REQUIRED };
-  }
-
-  const rl = await checkAiRateLimit(session.user.id);
-  if (!rl.ok) {
-    return {
-      success: false,
-      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
-    };
-  }
+  const gate = await aiGate(session.userId);
+  if (!gate.ok) return { success: false, error: gate.error };
 
   // Re-fetch the item server-side so the user can never explain code
   // they don't own — even if a malicious client passes a foreign id.
-  const item = await getItemDetail(parsed.data.itemId, session.user.id);
+  const item = await getItemDetail(parsed.data.itemId, session.userId);
   if (!item) {
     return { success: false, error: 'Item not found' };
   }
@@ -307,33 +256,18 @@ export type OptimizePromptPayload = z.input<typeof optimizePromptSchema>;
 export async function optimizePrompt(
   payload: OptimizePromptPayload,
 ): Promise<ActionResult<{ original: string; optimized: string }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const session = await requireUserId();
+  if (!session.ok) return { success: false, error: session.error };
 
-  const parsed = optimizePromptSchema.safeParse(payload);
-  if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { success: false, error: first?.message ?? 'Invalid input' };
-  }
+  const parsed = parseOrFail(optimizePromptSchema, payload);
+  if (!parsed.ok) return { success: false, error: parsed.error };
 
-  const access = await canUseAi(session.user.id);
-  if (!access.allowed) {
-    return { success: false, error: PRO_REQUIRED };
-  }
-
-  const rl = await checkAiRateLimit(session.user.id);
-  if (!rl.ok) {
-    return {
-      success: false,
-      error: `Too many AI requests. Try again in ${rl.retryAfterSeconds ?? 60}s.`,
-    };
-  }
+  const gate = await aiGate(session.userId);
+  if (!gate.ok) return { success: false, error: gate.error };
 
   // Re-fetch the item server-side so a malicious client can't optimize a
   // prompt they don't own.
-  const item = await getItemDetail(parsed.data.itemId, session.user.id);
+  const item = await getItemDetail(parsed.data.itemId, session.userId);
   if (!item) {
     return { success: false, error: 'Item not found' };
   }
@@ -393,9 +327,7 @@ function buildOptimizeInput({
 function cleanOptimized(raw: string | undefined | null): string {
   if (!raw) return '';
   let s = raw.trim();
-  // Strip wrapping quotes / fences if the model added any.
   if (s.startsWith('```')) {
-    // Drop the first fence line and the trailing fence.
     s = s.replace(/^```[a-zA-Z0-9]*\n?/, '').replace(/```\s*$/, '').trim();
   }
   if (
@@ -411,7 +343,6 @@ function cleanOptimized(raw: string | undefined | null): string {
 function cleanSummary(raw: string | undefined | null): string {
   if (!raw) return '';
   let s = raw.trim();
-  // Strip wrapping quotes if the model added any.
   if (
     (s.startsWith('"') && s.endsWith('"')) ||
     (s.startsWith('“') && s.endsWith('”')) ||
@@ -419,7 +350,6 @@ function cleanSummary(raw: string | undefined | null): string {
   ) {
     s = s.slice(1, -1).trim();
   }
-  // Collapse whitespace.
   s = s.replace(/\s+/g, ' ');
   if (s.length > MAX_SUMMARY_CHARS) {
     s = `${s.slice(0, MAX_SUMMARY_CHARS - 1).trimEnd()}…`;

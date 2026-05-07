@@ -1,14 +1,11 @@
 'use server';
 
 import { z } from 'zod';
-import { auth } from '@/auth';
 import { stripe, STRIPE_PRICE_IDS, type BillingInterval } from '@/lib/stripe';
 import { getOrCreateStripeCustomerId } from '@/lib/db/billing';
 import { prisma } from '@/lib/prisma';
-
-type ActionResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+import { parseOrFail, requireUserId } from '@/lib/action-helpers';
+import type { ActionResult } from '@/types/action';
 
 const checkoutSchema = z.object({
   interval: z.enum(['monthly', 'yearly']),
@@ -23,16 +20,11 @@ function getBaseUrl(): string {
 export async function createCheckoutSession(
   payload: CreateCheckoutPayload,
 ): Promise<ActionResult<{ url: string }>> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const session = await requireUserId();
+  if (!session.ok) return { success: false, error: session.error };
 
-  const parsed = checkoutSchema.safeParse(payload);
-  if (!parsed.success) {
-    const first = parsed.error.issues[0];
-    return { success: false, error: first?.message ?? 'Invalid input' };
-  }
+  const parsed = parseOrFail(checkoutSchema, payload);
+  if (!parsed.ok) return { success: false, error: parsed.error };
 
   const interval: BillingInterval = parsed.data.interval;
   const priceId = STRIPE_PRICE_IDS[interval];
@@ -42,7 +34,7 @@ export async function createCheckoutSession(
 
   try {
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.userId },
       select: { email: true },
     });
     if (!user?.email) {
@@ -50,7 +42,7 @@ export async function createCheckoutSession(
     }
 
     const customerId = await getOrCreateStripeCustomerId(
-      session.user.id,
+      session.userId,
       user.email,
       stripe,
     );
@@ -62,9 +54,9 @@ export async function createCheckoutSession(
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${baseUrl}/settings?checkout=success`,
       cancel_url: `${baseUrl}/settings?checkout=cancel`,
-      metadata: { userId: session.user.id },
+      metadata: { userId: session.userId },
       subscription_data: {
-        metadata: { userId: session.user.id },
+        metadata: { userId: session.userId },
       },
     });
 
@@ -81,14 +73,12 @@ export async function createCheckoutSession(
 export async function createPortalSession(): Promise<
   ActionResult<{ url: string }>
 > {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return { success: false, error: 'Unauthorized' };
-  }
+  const session = await requireUserId();
+  if (!session.ok) return { success: false, error: session.error };
 
   try {
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.userId },
       select: { stripeCustomerId: true },
     });
     if (!user?.stripeCustomerId) {
