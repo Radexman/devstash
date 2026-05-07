@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
 	Star,
@@ -9,10 +10,10 @@ import {
 	ChevronLeft,
 	ChevronRight,
 	LogOut,
-	PanelLeft,
 	Settings,
 	User as UserIcon,
 } from 'lucide-react';
+import { useMobileSidebar } from '@/components/dashboard/MobileSidebarContext';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -21,7 +22,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
 	DropdownMenu,
@@ -57,6 +58,9 @@ function SidebarContent({
 }: {
 	collapsed: boolean;
 } & SidebarProps) {
+	const pathname = usePathname();
+	const isActive = (href: string) =>
+		pathname === href || pathname.startsWith(`${href}/`);
 	return (
 		<div className="flex h-full flex-col">
 			{/* Types section */}
@@ -71,13 +75,20 @@ function SidebarContent({
 						{itemTypes.map((type) => {
 							const Icon = iconMap[type.icon];
 							const href = `/items/${type.name.toLowerCase()}`;
+							const active = isActive(href);
 							return collapsed ? (
 								<Tooltip key={type.id}>
 									<TooltipTrigger
 										render={
 											<Link
 												href={href}
-												className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground mx-auto"
+												aria-label={`${type.name} (${type.count})`}
+												aria-current={active ? 'page' : undefined}
+												className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
+													active
+														? 'bg-accent text-foreground'
+														: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+												}`}
 											/>
 										}
 									>
@@ -91,7 +102,12 @@ function SidebarContent({
 								<Link
 									key={type.id}
 									href={href}
-									className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									aria-current={active ? 'page' : undefined}
+									className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
+										active
+											? 'bg-accent font-medium text-foreground'
+											: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+									}`}
 								>
 									{Icon && <Icon className="h-4 w-4 shrink-0" style={{ color: type.color }} />}
 									<span className="flex-1">{type.name}</span>
@@ -119,11 +135,24 @@ function SidebarContent({
 						</p>
 					)}
 					<nav className="space-y-0.5">
-						{favoriteCollections.map((col) =>
-							collapsed ? (
+						{favoriteCollections.map((col) => {
+							const href = `/collections/${col.id}`;
+							const active = isActive(href);
+							return collapsed ? (
 								<Tooltip key={col.id}>
 									<TooltipTrigger
-										className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground mx-auto"
+										render={
+											<Link
+												href={href}
+												aria-label={col.name}
+												aria-current={active ? 'page' : undefined}
+												className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
+													active
+														? 'bg-accent text-foreground'
+														: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+												}`}
+											/>
+										}
 									>
 										<Star className="h-4 w-4 text-yellow-500" />
 									</TooltipTrigger>
@@ -134,14 +163,19 @@ function SidebarContent({
 							) : (
 								<Link
 									key={col.id}
-									href="#"
-									className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									href={href}
+									aria-current={active ? 'page' : undefined}
+									className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
+										active
+											? 'bg-accent font-medium text-foreground'
+											: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+									}`}
 								>
 									<Star className="h-4 w-4 shrink-0 text-yellow-500" />
 									<span className="flex-1 truncate">{col.name}</span>
 								</Link>
-							),
-						)}
+							);
+						})}
 					</nav>
 
 					{/* Recent Collections */}
@@ -151,11 +185,24 @@ function SidebarContent({
 						</p>
 					)}
 					<nav className="space-y-0.5">
-						{recentCollections.map((col) =>
-							collapsed ? (
+						{recentCollections.map((col) => {
+							const href = `/collections/${col.id}`;
+							const active = isActive(href);
+							return collapsed ? (
 								<Tooltip key={col.id}>
 									<TooltipTrigger
-										className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground mx-auto"
+										render={
+											<Link
+												href={href}
+												aria-label={col.name}
+												aria-current={active ? 'page' : undefined}
+												className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
+													active
+														? 'bg-accent text-foreground'
+														: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+												}`}
+											/>
+										}
 									>
 										<span
 											className="h-3 w-3 rounded-full"
@@ -169,8 +216,13 @@ function SidebarContent({
 							) : (
 								<Link
 									key={col.id}
-									href="#"
-									className="flex items-center gap-3 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+									href={href}
+									aria-current={active ? 'page' : undefined}
+									className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
+										active
+											? 'bg-accent font-medium text-foreground'
+											: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+									}`}
 								>
 									<span
 										className="h-3 w-3 shrink-0 rounded-full"
@@ -179,8 +231,8 @@ function SidebarContent({
 									<span className="flex-1 truncate">{col.name}</span>
 									<span className="text-xs text-muted-foreground/60">{col.itemCount}</span>
 								</Link>
-							),
-						)}
+							);
+						})}
 					</nav>
 
 					{/* View all collections link */}
@@ -293,6 +345,7 @@ function SidebarContent({
 
 export function Sidebar({ itemTypes, favoriteCollections, recentCollections, user }: SidebarProps) {
 	const [collapsed, setCollapsed] = useState(false);
+	const { open: mobileOpen, setOpen: setMobileOpen } = useMobileSidebar();
 
 	return (
 		<TooltipProvider delay={0}>
@@ -326,19 +379,8 @@ export function Sidebar({ itemTypes, favoriteCollections, recentCollections, use
 				/>
 			</aside>
 
-			{/* Mobile drawer */}
-			<Sheet>
-				<SheetTrigger
-					render={
-						<Button
-							variant="ghost"
-							size="icon"
-							className="fixed left-3 top-3 z-40 md:hidden h-9 w-9"
-						/>
-					}
-				>
-					<PanelLeft className="h-5 w-5" />
-				</SheetTrigger>
+			{/* Mobile drawer — trigger lives in TopBar via MobileSidebarContext */}
+			<Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
 				<SheetContent side="left" className="w-60 p-0">
 					<SheetTitle className="sr-only">Navigation</SheetTitle>
 					<SidebarContent
