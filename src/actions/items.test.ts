@@ -17,7 +17,7 @@ vi.mock('@/lib/db/collections', () => ({
 }));
 
 vi.mock('@/lib/plan-limits', () => ({
-  canCreate: vi.fn(),
+  checkCreateLimit: vi.fn(),
 }));
 
 import { auth } from '@/auth';
@@ -30,7 +30,7 @@ import {
   type ItemDetail,
 } from '@/lib/db/items';
 import { getUserCollectionIds } from '@/lib/db/collections';
-import { canCreate } from '@/lib/plan-limits';
+import { checkCreateLimit } from '@/lib/plan-limits';
 import {
   updateItem,
   deleteItem,
@@ -46,7 +46,7 @@ const mockCreate = vi.mocked(createItemQuery);
 const mockToggleFavorite = vi.mocked(toggleItemFavoriteQuery);
 const mockTogglePin = vi.mocked(toggleItemPinQuery);
 const mockOwnedCollections = vi.mocked(getUserCollectionIds);
-const mockCanCreate = vi.mocked(canCreate);
+const mockCheckCreateLimit = vi.mocked(checkCreateLimit);
 
 const fakeDetail: ItemDetail = {
   id: 'i1',
@@ -70,7 +70,7 @@ beforeEach(() => {
   // @ts-expect-error partial session
   mockAuth.mockResolvedValue({ user: { id: 'u1' } });
   mockOwnedCollections.mockImplementation(async (_uid, ids) => ids);
-  mockCanCreate.mockResolvedValue({ allowed: true, used: 0, limit: 50 });
+  mockCheckCreateLimit.mockResolvedValue({ ok: true });
 });
 
 describe('updateItem action', () => {
@@ -267,11 +267,9 @@ describe('createItem action', () => {
   });
 
   it('returns limit-reached error and skips create when at the free plan cap', async () => {
-    mockCanCreate.mockResolvedValueOnce({
-      allowed: false,
-      reason: 'limit_reached',
-      used: 50,
-      limit: 50,
+    mockCheckCreateLimit.mockResolvedValueOnce({
+      ok: false,
+      error: 'Free plan limit of 50 items reached. Upgrade to Pro for unlimited.',
     });
     const res = await createItem({
       type: 'snippet',
