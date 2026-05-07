@@ -300,25 +300,7 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 							</div>
 						</SheetHeader>
 
-						{isEditing && form ? (
-							<div className="flex items-center justify-end gap-2 px-4">
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={handleCancelEdit}
-									disabled={saving}
-								>
-									Cancel
-								</Button>
-								<Button
-									size="sm"
-									onClick={handleSave}
-									disabled={saving || form.title.trim().length === 0}
-								>
-									{saving ? 'Saving…' : 'Save'}
-								</Button>
-							</div>
-						) : (
+						{!isEditing && (
 							<div className="flex items-center gap-1 px-4">
 								<Button
 									variant="ghost"
@@ -381,12 +363,31 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 						<Separator />
 
 						{isEditing && form ? (
-							<EditFormFields
-								item={item}
-								form={form}
-								onChange={setForm}
-								isPro={isPro}
-							/>
+							<>
+								<EditFormFields
+									item={item}
+									form={form}
+									onChange={setForm}
+									isPro={isPro}
+								/>
+								<div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-border bg-background/95 px-4 py-3 backdrop-blur supports-backdrop-filter:bg-background/80">
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={handleCancelEdit}
+										disabled={saving}
+									>
+										Cancel
+									</Button>
+									<Button
+										size="sm"
+										onClick={handleSave}
+										disabled={saving || form.title.trim().length === 0}
+									>
+										{saving ? 'Saving…' : 'Save'}
+									</Button>
+								</div>
+							</>
 						) : (
 						<div className="space-y-5 px-4 pb-6">
 							<div className="flex flex-wrap items-center gap-2">

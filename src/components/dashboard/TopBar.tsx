@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { MoreHorizontal, Plus, Sparkles, Star } from 'lucide-react';
+import { MoreHorizontal, PanelLeft, Plus, Sparkles, Star } from 'lucide-react';
 import { Logo } from '@/components/home/Logo';
 import { NewItemDialog } from '@/components/items/NewItemDialog';
 import { NewCollectionDialog } from '@/components/collections/NewCollectionDialog';
@@ -14,6 +14,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useMobileSidebar } from '@/components/dashboard/MobileSidebarContext';
 
 interface TopBarProps {
 	isPro?: boolean;
@@ -22,9 +23,19 @@ interface TopBarProps {
 export function TopBar({ isPro = false }: TopBarProps) {
 	const [newItemOpen, setNewItemOpen] = useState(false);
 	const [newCollectionOpen, setNewCollectionOpen] = useState(false);
+	const { setOpen: setMobileSidebarOpen } = useMobileSidebar();
 
 	return (
 		<header className='flex items-center justify-between gap-2 border-b border-border px-3 py-3 sm:gap-4 sm:px-6'>
+			<Button
+				variant='ghost'
+				size='icon'
+				aria-label='Open navigation'
+				className='h-8 w-8 shrink-0 md:hidden'
+				onClick={() => setMobileSidebarOpen(true)}
+			>
+				<PanelLeft className='h-5 w-5' />
+			</Button>
 			<Logo
 				href='/dashboard'
 				className='shrink-0 text-lg'
