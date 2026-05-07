@@ -16,8 +16,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { UpgradeButton } from '@/components/billing/UpgradeButton';
+import { FreeLimitBanner } from '@/components/billing/FreeLimitBanner';
 import { createCollection } from '@/actions/collections';
+import { useControlledOpen } from '@/hooks/use-controlled-open';
 
 interface FormState {
   name: string;
@@ -39,13 +40,7 @@ export function NewCollectionDialog({
   onOpenChange,
 }: NewCollectionDialogProps = {}) {
   const router = useRouter();
-  const isControlled = controlledOpen !== undefined;
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = (next: boolean) => {
-    if (!isControlled) setInternalOpen(next);
-    onOpenChange?.(next);
-  };
+  const { open, setOpen, isControlled } = useControlledOpen(controlledOpen, onOpenChange);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
@@ -103,12 +98,7 @@ export function NewCollectionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {limitError && (
-          <div className="flex flex-col gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-amber-200">{limitError}</p>
-            <UpgradeButton interval="monthly">Upgrade</UpgradeButton>
-          </div>
-        )}
+        {limitError && <FreeLimitBanner message={limitError} />}
 
         <div className="space-y-4">
           <div className="space-y-1.5">

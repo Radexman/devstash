@@ -14,7 +14,6 @@ import {
 	User as UserIcon,
 } from 'lucide-react';
 import { useMobileSidebar } from '@/components/dashboard/MobileSidebarContext';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import {
 	Tooltip,
@@ -31,6 +30,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/shared/UserAvatar';
+import { ProBadge } from '@/components/shared/ProBadge';
 import { iconMap } from '@/lib/item-icons';
 import type { SidebarItemType } from '@/lib/db/items';
 import type { SidebarCollection } from '@/lib/db/collections';
@@ -47,6 +47,91 @@ interface SidebarProps {
 	favoriteCollections: SidebarCollection[];
 	recentCollections: SidebarCollection[];
 	user?: UserInfo | null;
+}
+
+interface SidebarNavLinkProps {
+	href: string;
+	collapsed: boolean;
+	active: boolean;
+	icon: React.ReactNode;
+	label: string;
+	tooltipLabel?: string;
+	trailing?: React.ReactNode;
+}
+
+function SidebarNavLink({
+	href,
+	collapsed,
+	active,
+	icon,
+	label,
+	tooltipLabel,
+	trailing,
+}: SidebarNavLinkProps) {
+	if (collapsed) {
+		return (
+			<Tooltip>
+				<TooltipTrigger
+					render={
+						<Link
+							href={href}
+							aria-label={tooltipLabel ?? label}
+							aria-current={active ? 'page' : undefined}
+							className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
+								active
+									? 'bg-accent text-foreground'
+									: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+							}`}
+						/>
+					}
+				>
+					{icon}
+				</TooltipTrigger>
+				<TooltipContent side="right">{tooltipLabel ?? label}</TooltipContent>
+			</Tooltip>
+		);
+	}
+
+	return (
+		<Link
+			href={href}
+			aria-current={active ? 'page' : undefined}
+			className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
+				active
+					? 'bg-accent font-medium text-foreground'
+					: 'text-muted-foreground hover:bg-accent hover:text-foreground'
+			}`}
+		>
+			{icon}
+			<span className="flex-1 truncate">{label}</span>
+			{trailing}
+		</Link>
+	);
+}
+
+function SidebarUserMenuItems({ isPro }: { isPro?: boolean }) {
+	return (
+		<>
+			{isPro && (
+				<div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
+					<span>Plan</span>
+					<ProBadge />
+				</div>
+			)}
+			<DropdownMenuItem render={<Link href="/profile" />}>
+				<UserIcon className="mr-2 h-4 w-4" />
+				Profile
+			</DropdownMenuItem>
+			<DropdownMenuItem render={<Link href="/settings" />}>
+				<Settings className="mr-2 h-4 w-4" />
+				Settings
+			</DropdownMenuItem>
+			<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
+				<LogOut className="mr-2 h-4 w-4" />
+				Sign out
+			</DropdownMenuItem>
+		</>
+	);
 }
 
 function SidebarContent({
@@ -75,44 +160,28 @@ function SidebarContent({
 						{itemTypes.map((type) => {
 							const Icon = iconMap[type.icon];
 							const href = `/items/${type.name.toLowerCase()}`;
-							const active = isActive(href);
-							return collapsed ? (
-								<Tooltip key={type.id}>
-									<TooltipTrigger
-										render={
-											<Link
-												href={href}
-												aria-label={`${type.name} (${type.count})`}
-												aria-current={active ? 'page' : undefined}
-												className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
-													active
-														? 'bg-accent text-foreground'
-														: 'text-muted-foreground hover:bg-accent hover:text-foreground'
-												}`}
-											/>
-										}
-									>
-										{Icon && <Icon className="h-4 w-4" style={{ color: type.color }} />}
-									</TooltipTrigger>
-									<TooltipContent side="right">
-										{type.name} ({type.count})
-									</TooltipContent>
-								</Tooltip>
-							) : (
-								<Link
+							return (
+								<SidebarNavLink
 									key={type.id}
 									href={href}
-									aria-current={active ? 'page' : undefined}
-									className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
-										active
-											? 'bg-accent font-medium text-foreground'
-											: 'text-muted-foreground hover:bg-accent hover:text-foreground'
-									}`}
-								>
-									{Icon && <Icon className="h-4 w-4 shrink-0" style={{ color: type.color }} />}
-									<span className="flex-1">{type.name}</span>
-									<span className="text-xs text-muted-foreground/60">{type.count}</span>
-								</Link>
+									collapsed={collapsed}
+									active={isActive(href)}
+									label={type.name}
+									tooltipLabel={`${type.name} (${type.count})`}
+									icon={
+										Icon ? (
+											<Icon
+												className="h-4 w-4 shrink-0"
+												style={{ color: type.color }}
+											/>
+										) : null
+									}
+									trailing={
+										<span className="text-xs text-muted-foreground/60">
+											{type.count}
+										</span>
+									}
+								/>
 							);
 						})}
 					</nav>
@@ -137,43 +206,17 @@ function SidebarContent({
 					<nav className="space-y-0.5">
 						{favoriteCollections.map((col) => {
 							const href = `/collections/${col.id}`;
-							const active = isActive(href);
-							return collapsed ? (
-								<Tooltip key={col.id}>
-									<TooltipTrigger
-										render={
-											<Link
-												href={href}
-												aria-label={col.name}
-												aria-current={active ? 'page' : undefined}
-												className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
-													active
-														? 'bg-accent text-foreground'
-														: 'text-muted-foreground hover:bg-accent hover:text-foreground'
-												}`}
-											/>
-										}
-									>
-										<Star className="h-4 w-4 text-yellow-500" />
-									</TooltipTrigger>
-									<TooltipContent side="right">
-										{col.name}
-									</TooltipContent>
-								</Tooltip>
-							) : (
-								<Link
+							return (
+								<SidebarNavLink
 									key={col.id}
 									href={href}
-									aria-current={active ? 'page' : undefined}
-									className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
-										active
-											? 'bg-accent font-medium text-foreground'
-											: 'text-muted-foreground hover:bg-accent hover:text-foreground'
-									}`}
-								>
-									<Star className="h-4 w-4 shrink-0 text-yellow-500" />
-									<span className="flex-1 truncate">{col.name}</span>
-								</Link>
+									collapsed={collapsed}
+									active={isActive(href)}
+									label={col.name}
+									icon={
+										<Star className="h-4 w-4 shrink-0 text-yellow-500" />
+									}
+								/>
 							);
 						})}
 					</nav>
@@ -187,50 +230,27 @@ function SidebarContent({
 					<nav className="space-y-0.5">
 						{recentCollections.map((col) => {
 							const href = `/collections/${col.id}`;
-							const active = isActive(href);
-							return collapsed ? (
-								<Tooltip key={col.id}>
-									<TooltipTrigger
-										render={
-											<Link
-												href={href}
-												aria-label={col.name}
-												aria-current={active ? 'page' : undefined}
-												className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors mx-auto ${
-													active
-														? 'bg-accent text-foreground'
-														: 'text-muted-foreground hover:bg-accent hover:text-foreground'
-												}`}
-											/>
-										}
-									>
-										<span
-											className="h-3 w-3 rounded-full"
-											style={{ backgroundColor: col.dominantColor ?? '#6b7280' }}
-										/>
-									</TooltipTrigger>
-									<TooltipContent side="right">
-										{col.name}
-									</TooltipContent>
-								</Tooltip>
-							) : (
-								<Link
+							return (
+								<SidebarNavLink
 									key={col.id}
 									href={href}
-									aria-current={active ? 'page' : undefined}
-									className={`flex items-center gap-3 rounded-md px-2 py-1.5 text-sm transition-colors ${
-										active
-											? 'bg-accent font-medium text-foreground'
-											: 'text-muted-foreground hover:bg-accent hover:text-foreground'
-									}`}
-								>
-									<span
-										className="h-3 w-3 shrink-0 rounded-full"
-										style={{ backgroundColor: col.dominantColor ?? '#6b7280' }}
-									/>
-									<span className="flex-1 truncate">{col.name}</span>
-									<span className="text-xs text-muted-foreground/60">{col.itemCount}</span>
-								</Link>
+									collapsed={collapsed}
+									active={isActive(href)}
+									label={col.name}
+									icon={
+										<span
+											className="h-3 w-3 shrink-0 rounded-full"
+											style={{
+												backgroundColor: col.dominantColor ?? '#6b7280',
+											}}
+										/>
+									}
+									trailing={
+										<span className="text-xs text-muted-foreground/60">
+											{col.itemCount}
+										</span>
+									}
+								/>
 							);
 						})}
 					</nav>
@@ -254,7 +274,11 @@ function SidebarContent({
 					<DropdownMenu>
 						<DropdownMenuTrigger className="flex items-center justify-center w-full">
 							<div className="relative">
-								<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8" />
+								<UserAvatar
+									name={user?.name}
+									image={user?.image}
+									className="h-8 w-8"
+								/>
 								{user?.isPro && (
 									<span
 										aria-label="Pro user"
@@ -264,30 +288,7 @@ function SidebarContent({
 							</div>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent side="right" align="end">
-							{user?.isPro && (
-								<div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
-									<span>Plan</span>
-									<Badge className="h-4 bg-indigo-500 px-1.5 text-[10px] font-semibold tracking-wide text-white">
-										PRO
-									</Badge>
-								</div>
-							)}
-							<DropdownMenuItem
-								render={<Link href="/profile" />}
-							>
-								<UserIcon className="mr-2 h-4 w-4" />
-								Profile
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								render={<Link href="/settings" />}
-							>
-								<Settings className="mr-2 h-4 w-4" />
-								Settings
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
-								<LogOut className="mr-2 h-4 w-4" />
-								Sign out
-							</DropdownMenuItem>
+							<SidebarUserMenuItems isPro={user?.isPro} />
 						</DropdownMenuContent>
 					</DropdownMenu>
 				) : (
@@ -297,44 +298,25 @@ function SidebarContent({
 								<button className="flex items-center gap-3 w-full min-w-0 rounded-md p-1 -m-1 hover:bg-accent transition-colors" />
 							}
 						>
-							<UserAvatar name={user?.name} image={user?.image} className="h-8 w-8 shrink-0" />
+							<UserAvatar
+								name={user?.name}
+								image={user?.image}
+								className="h-8 w-8 shrink-0"
+							/>
 							<div className="flex-1 min-w-0 text-left">
 								<div className="flex items-center gap-1.5">
-									<p className="truncate text-sm font-medium">{user?.name ?? 'User'}</p>
-									{user?.isPro && (
-										<Badge className="h-4 shrink-0 bg-indigo-500 px-1.5 text-[10px] font-semibold tracking-wide text-white">
-											PRO
-										</Badge>
-									)}
+									<p className="truncate text-sm font-medium">
+										{user?.name ?? 'User'}
+									</p>
+									{user?.isPro && <ProBadge className="shrink-0" />}
 								</div>
-								<p className="truncate text-xs text-muted-foreground">{user?.email}</p>
+								<p className="truncate text-xs text-muted-foreground">
+									{user?.email}
+								</p>
 							</div>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent side="top" align="start" className="w-48">
-							{user?.isPro && (
-								<div className="flex items-center justify-between px-2 py-1.5 text-xs text-muted-foreground">
-									<span>Plan</span>
-									<Badge className="h-4 bg-indigo-500 px-1.5 text-[10px] font-semibold tracking-wide text-white">
-										PRO
-									</Badge>
-								</div>
-							)}
-							<DropdownMenuItem
-								render={<Link href="/profile" />}
-							>
-								<UserIcon className="mr-2 h-4 w-4" />
-								Profile
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								render={<Link href="/settings" />}
-							>
-								<Settings className="mr-2 h-4 w-4" />
-								Settings
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={() => signOut({ callbackUrl: '/sign-in' })}>
-								<LogOut className="mr-2 h-4 w-4" />
-								Sign out
-							</DropdownMenuItem>
+							<SidebarUserMenuItems isPro={user?.isPro} />
 						</DropdownMenuContent>
 					</DropdownMenu>
 				)}
@@ -343,7 +325,12 @@ function SidebarContent({
 	);
 }
 
-export function Sidebar({ itemTypes, favoriteCollections, recentCollections, user }: SidebarProps) {
+export function Sidebar({
+	itemTypes,
+	favoriteCollections,
+	recentCollections,
+	user,
+}: SidebarProps) {
 	const [collapsed, setCollapsed] = useState(false);
 	const { open: mobileOpen, setOpen: setMobileOpen } = useMobileSidebar();
 
@@ -356,7 +343,11 @@ export function Sidebar({ itemTypes, favoriteCollections, recentCollections, use
 				}`}
 			>
 				{/* Collapse toggle */}
-				<div className={`flex items-center p-3 ${collapsed ? 'justify-center' : 'justify-end'}`}>
+				<div
+					className={`flex items-center p-3 ${
+						collapsed ? 'justify-center' : 'justify-end'
+					}`}
+				>
 					<Button
 						variant="ghost"
 						size="icon"

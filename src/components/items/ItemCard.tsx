@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Copy, Pin, Star } from 'lucide-react';
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
 import { copyItemContent } from '@/lib/copy-item';
 import { useItemDrawer } from '@/components/items/ItemDrawerProvider';
 import { toggleItemFavorite } from '@/actions/items';
+import { useOptimisticToggle } from '@/hooks/use-optimistic-toggle';
+import { makeItemKeyHandler } from '@/lib/item-key-handler';
 import type { ItemWithType } from '@/lib/db/items';
 
 interface ItemCardProps {
@@ -19,32 +19,22 @@ interface ItemCardProps {
 export function ItemCard({ item }: ItemCardProps) {
 	const Icon = iconMap[item.itemType.icon];
 	const { openItem } = useItemDrawer();
-	const router = useRouter();
 	const [isFavorite, setIsFavorite] = useState(item.isFavorite);
-	const [favoriting, setFavoriting] = useState(false);
 
-	const handleCardKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			openItem(item.id);
-		}
-	};
+	const { run: toggleFavorite, busy: favoriting } = useOptimisticToggle(
+		() => toggleItemFavorite(item.id),
+		{
+			applyOptimistic: () => setIsFavorite((v) => !v),
+			rollback: () => setIsFavorite(isFavorite),
+			applyResult: (data) => setIsFavorite(data.isFavorite),
+		},
+	);
 
-	const handleToggleFavorite = async (e: React.MouseEvent) => {
+	const handleCardKey = makeItemKeyHandler<HTMLDivElement>(() => openItem(item.id));
+
+	const handleToggleFavorite = (e: React.MouseEvent) => {
 		e.stopPropagation();
-		if (favoriting) return;
-		const previous = isFavorite;
-		setIsFavorite(!previous);
-		setFavoriting(true);
-		const result = await toggleItemFavorite(item.id);
-		setFavoriting(false);
-		if (!result.success) {
-			setIsFavorite(previous);
-			toast.error(result.error);
-			return;
-		}
-		setIsFavorite(result.data.isFavorite);
-		router.refresh();
+		void toggleFavorite();
 	};
 
 	return (
