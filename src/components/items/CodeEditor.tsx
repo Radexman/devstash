@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Editor, { type Monaco } from '@monaco-editor/react';
-import { Check, Copy, Crown, Loader2, Sparkles } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
@@ -14,11 +14,9 @@ import {
 } from '@/lib/monaco-themes';
 import { explainCode } from '@/actions/ai';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  EDITOR_CHROME_BUTTON_CLASS,
+  EditorActionButton,
+} from '@/components/items/EditorActionButton';
 
 interface ExplainContext {
   itemId: string;
@@ -142,16 +140,19 @@ export function CodeEditor({
           {language && language !== 'plaintext' && (
             <span className="text-xs text-[#858585]">{language}</span>
           )}
-          {showExplain && explain && <ExplainButton
-            isPro={explain.isPro}
-            loading={explaining}
-            disabled={explaining}
-            onClick={handleExplain}
-          />}
+          {showExplain && explain && (
+            <EditorActionButton
+              label="Explain"
+              isPro={explain.isPro}
+              loading={explaining}
+              disabled={explaining}
+              onClick={handleExplain}
+            />
+          )}
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
+            className={EDITOR_CHROME_BUTTON_CLASS}
             aria-label="Copy"
           >
             {copied ? (
@@ -219,46 +220,3 @@ export function CodeEditor({
   );
 }
 
-interface ExplainButtonProps {
-  isPro: boolean;
-  loading: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}
-
-function ExplainButton({ isPro, loading, disabled, onClick }: ExplainButtonProps) {
-  if (!isPro) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            aria-label="AI features require Pro subscription"
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
-          >
-            <Crown className="h-3.5 w-3.5" />
-            Explain
-          </TooltipTrigger>
-          <TooltipContent>AI features require Pro subscription</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label="Explain code with AI"
-      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc] disabled:opacity-60"
-    >
-      {loading ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      ) : (
-        <Sparkles className="h-3.5 w-3.5" />
-      )}
-      Explain
-    </button>
-  );
-}

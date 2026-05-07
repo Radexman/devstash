@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ProBadge } from '@/components/shared/ProBadge';
 import { Separator } from '@/components/ui/separator';
 import { getBillingProfile } from '@/lib/db/billing';
 import { FREE_LIMITS } from '@/lib/plan-limits';
@@ -52,7 +52,7 @@ function ProSection({
         <div>
           <p className="flex items-center gap-2 text-sm font-medium">
             DevStash Pro
-            <Badge className="bg-indigo-500 text-white">PRO</Badge>
+            <ProBadge size="default" />
           </p>
           <p className="text-xs text-muted-foreground">{renewLine}</p>
         </div>

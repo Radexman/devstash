@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { MoreHorizontal, Pencil, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -10,9 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog';
-import { DeleteCollectionDialog } from '@/components/collections/DeleteCollectionDialog';
 import { toggleCollectionFavorite } from '@/actions/collections';
+import { useCollectionDialogs } from '@/hooks/use-collection-dialogs';
 
 interface CollectionCardMenuProps {
   collection: {
@@ -25,9 +24,15 @@ interface CollectionCardMenuProps {
 
 export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [favoriting, setFavoriting] = useState(false);
+
+  const { setEditOpen, setDeleteOpen, dialogs } = useCollectionDialogs({
+    collection: {
+      id: collection.id,
+      name: collection.name,
+      description: collection.description,
+    },
+  });
 
   const stop = (e: React.MouseEvent | React.PointerEvent) => {
     e.preventDefault();
@@ -100,17 +105,7 @@ export function CollectionCardMenu({ collection }: CollectionCardMenuProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <EditCollectionDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        collection={collection}
-      />
-      <DeleteCollectionDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        collectionId={collection.id}
-        collectionName={collection.name}
-      />
+      {dialogs}
     </>
   );
 }

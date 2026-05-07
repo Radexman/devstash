@@ -21,13 +21,15 @@ import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { SuggestTagsButton } from '@/components/items/SuggestTagsButton';
 import { SuggestSummaryButton } from '@/components/items/SuggestSummaryButton';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
-import { UpgradeButton } from '@/components/billing/UpgradeButton';
+import { FreeLimitBanner } from '@/components/billing/FreeLimitBanner';
 import { createItem } from '@/actions/items';
 import { parseTagString, appendTagToString } from '@/lib/tags';
 import {
   CODE_LANGUAGES,
   DEFAULT_CODE_LANGUAGE,
 } from '@/lib/code-languages';
+import { NATIVE_SELECT_CLASSES } from '@/components/items/native-select-styles';
+import { useControlledOpen } from '@/hooks/use-controlled-open';
 
 const TYPES = [
   { value: 'snippet', label: 'Snippet' },
@@ -69,13 +71,7 @@ interface NewItemDialogProps {
 
 export function NewItemDialog({ open: controlledOpen, onOpenChange, isPro = false }: NewItemDialogProps = {}) {
   const router = useRouter();
-  const isControlled = controlledOpen !== undefined;
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = isControlled ? controlledOpen : internalOpen;
-  const setOpen = (next: boolean) => {
-    if (!isControlled) setInternalOpen(next);
-    onOpenChange?.(next);
-  };
+  const { open, setOpen, isControlled } = useControlledOpen(controlledOpen, onOpenChange);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
   const [limitError, setLimitError] = useState<string | null>(null);
@@ -147,12 +143,7 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange, isPro = fals
           </DialogDescription>
         </DialogHeader>
 
-        {limitError && (
-          <div className="flex flex-col gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-amber-200">{limitError}</p>
-            <UpgradeButton interval="monthly">Upgrade</UpgradeButton>
-          </div>
-        )}
+        {limitError && <FreeLimitBanner message={limitError} />}
 
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -161,7 +152,7 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange, isPro = fals
               id="new-item-type"
               value={form.type}
               onChange={(e) => set('type', e.target.value as ItemType)}
-              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              className={NATIVE_SELECT_CLASSES}
             >
               {TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -211,7 +202,7 @@ export function NewItemDialog({ open: controlledOpen, onOpenChange, isPro = fals
                 id="new-item-language"
                 value={form.language}
                 onChange={(e) => set('language', e.target.value)}
-                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className={NATIVE_SELECT_CLASSES}
               >
                 {CODE_LANGUAGES.map((lang) => (
                   <option key={lang.value} value={lang.value}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Copy, Pencil, Pin, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -11,14 +11,6 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from '@/components/ui/sheet';
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -32,13 +24,18 @@ import { CodeEditor } from '@/components/items/CodeEditor';
 import { MarkdownEditor } from '@/components/items/MarkdownEditor';
 import { SuggestTagsButton } from '@/components/items/SuggestTagsButton';
 import { SuggestSummaryButton } from '@/components/items/SuggestSummaryButton';
+import { ItemDeleteDialog } from '@/components/items/ItemDeleteDialog';
+import { ItemDrawerReadView } from '@/components/items/ItemDrawerReadView';
 import type { GenerateSummaryPayload } from '@/actions/ai';
 import { CollectionMultiSelect } from '@/components/collections/CollectionMultiSelect';
 import {
 	DEFAULT_CODE_LANGUAGE,
 	getLanguageOptions,
 } from '@/lib/code-languages';
+import { NATIVE_SELECT_CLASSES } from '@/components/items/native-select-styles';
 import { appendTagToString, parseTagString } from '@/lib/tags';
+import { useOptimisticToggle } from '@/hooks/use-optimistic-toggle';
+import { useItemDetail } from '@/hooks/use-item-detail';
 import type { ItemDetail } from '@/lib/db/items';
 
 const TEXT_TYPES = new Set(['snippet', 'prompt', 'command', 'note']);
@@ -75,53 +72,62 @@ interface ItemDrawerProps {
 
 export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDrawerProps) {
 	const router = useRouter();
-	const [item, setItem] = useState<ItemDetail | null>(null);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const { item, setItem, loading, error } = useItemDetail(itemId);
 	const [isEditing, setIsEditing] = useState(false);
 	const [form, setForm] = useState<EditForm | null>(null);
 	const [saving, setSaving] = useState(false);
 	const [deleteOpen, setDeleteOpen] = useState(false);
 	const [deleting, setDeleting] = useState(false);
-	const [favoriting, setFavoriting] = useState(false);
-	const [pinning, setPinning] = useState(false);
+	const [prevItemId, setPrevItemId] = useState(itemId);
 
-	useEffect(() => {
-		if (!itemId) {
-			setItem(null);
-			setError(null);
-			setIsEditing(false);
-			setForm(null);
-			return;
-		}
+	if (itemId !== prevItemId) {
+		setPrevItemId(itemId);
+		setIsEditing(false);
+		setForm(null);
+	}
 
-		let cancelled = false;
-		setLoading(true);
-		setError(null);
+	const { run: handleToggleFavorite, busy: favoriting } = useOptimisticToggle(
+		async () => {
+			if (!item) return { success: false as const, error: 'No item' };
+			return toggleItemFavorite(item.id);
+		},
+		{
+			applyOptimistic: () => {
+				if (!item) return;
+				setItem({ ...item, isFavorite: !item.isFavorite });
+			},
+			rollback: () => {
+				if (!item) return;
+				setItem({ ...item, isFavorite: item.isFavorite });
+			},
+			applyResult: (data) => {
+				if (!item) return;
+				setItem({ ...item, isFavorite: data.isFavorite });
+			},
+		},
+	);
 
-		fetch(`/api/items/${itemId}`)
-			.then(async (res) => {
-				if (!res.ok) throw new Error('Failed to load item');
-				const data = (await res.json()) as { item: ItemDetail };
-				if (cancelled) return;
-				const parsed: ItemDetail = {
-					...data.item,
-					createdAt: new Date(data.item.createdAt),
-					updatedAt: new Date(data.item.updatedAt),
-				};
-				setItem(parsed);
-			})
-			.catch((err: Error) => {
-				if (!cancelled) setError(err.message);
-			})
-			.finally(() => {
-				if (!cancelled) setLoading(false);
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	}, [itemId]);
+	const { run: handleTogglePin, busy: pinning } = useOptimisticToggle(
+		async () => {
+			if (!item) return { success: false as const, error: 'No item' };
+			return toggleItemPin(item.id);
+		},
+		{
+			applyOptimistic: () => {
+				if (!item) return;
+				setItem({ ...item, isPinned: !item.isPinned });
+			},
+			rollback: () => {
+				if (!item) return;
+				setItem({ ...item, isPinned: item.isPinned });
+			},
+			applyResult: (data) => {
+				if (!item) return;
+				setItem({ ...item, isPinned: data.isPinned });
+			},
+			successMessage: (data) => (data.isPinned ? 'Item pinned' : 'Item unpinned'),
+		},
+	);
 
 	const handleStartEdit = () => {
 		if (!item) return;
@@ -185,41 +191,6 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 		router.refresh();
 	};
 
-	const handleToggleFavorite = async () => {
-		if (!item || favoriting) return;
-		const previous = item.isFavorite;
-		const optimistic = !previous;
-		setItem({ ...item, isFavorite: optimistic });
-		setFavoriting(true);
-		const result = await toggleItemFavorite(item.id);
-		setFavoriting(false);
-		if (!result.success) {
-			setItem({ ...item, isFavorite: previous });
-			toast.error(result.error);
-			return;
-		}
-		setItem({ ...item, isFavorite: result.data.isFavorite });
-		router.refresh();
-	};
-
-	const handleTogglePin = async () => {
-		if (!item || pinning) return;
-		const previous = item.isPinned;
-		const optimistic = !previous;
-		setItem({ ...item, isPinned: optimistic });
-		setPinning(true);
-		const result = await toggleItemPin(item.id);
-		setPinning(false);
-		if (!result.success) {
-			setItem({ ...item, isPinned: previous });
-			toast.error(result.error);
-			return;
-		}
-		setItem({ ...item, isPinned: result.data.isPinned });
-		toast.success(result.data.isPinned ? 'Item pinned' : 'Item unpinned');
-		router.refresh();
-	};
-
 	const handleCopy = async () => {
 		if (!item) return;
 		const text = item.content ?? item.url ?? '';
@@ -262,7 +233,6 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 	};
 
 	const Icon = item ? iconMap[item.itemType.icon] : null;
-	const typeName = item ? item.itemType.name.toLowerCase() : '';
 
 	return (
 		<>
@@ -389,137 +359,22 @@ export function ItemDrawer({ itemId, open, onOpenChange, isPro = false }: ItemDr
 								</div>
 							</>
 						) : (
-						<div className="space-y-5 px-4 pb-6">
-							<div className="flex flex-wrap items-center gap-2">
-								<Badge
-									variant="outline"
-									style={{
-										borderColor: item.itemType.color,
-										color: item.itemType.color,
-									}}
-								>
-									{item.itemType.name}
-								</Badge>
-								{item.language && (
-									<Badge variant="secondary">{item.language}</Badge>
-								)}
-							</div>
-
-							{item.tags.length > 0 && (
-								<div>
-									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-										Tags
-									</h3>
-									<div className="flex flex-wrap gap-1">
-										{item.tags.map((tag) => (
-											<Badge key={tag.id} variant="secondary">
-												{tag.name}
-											</Badge>
-										))}
-									</div>
-								</div>
-							)}
-
-							{item.collections.length > 0 && (
-								<div>
-									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-										Collections
-									</h3>
-									<div className="flex flex-wrap gap-1">
-										{item.collections.map((c) => (
-											<Badge key={c.id} variant="outline">
-												{c.name}
-											</Badge>
-										))}
-									</div>
-								</div>
-							)}
-
-							{item.url && (
-								<div>
-									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-										URL
-									</h3>
-									<a
-										href={item.url}
-										target="_blank"
-										rel="noreferrer"
-										className="break-all text-sm text-primary hover:underline"
-									>
-										{item.url}
-									</a>
-								</div>
-							)}
-
-							{item.content && (
-								<div>
-									<h3 className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-										Content
-									</h3>
-									{LANGUAGE_TYPES.has(typeName) ? (
-										<CodeEditor
-											value={item.content}
-											language={item.language ?? 'plaintext'}
-											readOnly
-											explain={{ itemId: item.id, isPro }}
-										/>
-									) : (
-										<MarkdownEditor
-											value={item.content}
-											readOnly
-											optimize={
-												typeName === 'prompt'
-													? {
-															itemId: item.id,
-															isPro,
-															onAccept: handleAcceptOptimized,
-													  }
-													: undefined
-											}
-										/>
-									)}
-								</div>
-							)}
-
-							<Separator />
-
-							<div className="space-y-1 text-xs text-muted-foreground">
-								<p>Created {formatDate(item.createdAt)}</p>
-								<p>Updated {formatDate(item.updatedAt)}</p>
-							</div>
-						</div>
+							<ItemDrawerReadView
+								item={item}
+								isPro={isPro}
+								onAcceptOptimized={handleAcceptOptimized}
+							/>
 						)}
 					</>
 				)}
 			</SheetContent>
 		</Sheet>
-		<Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Delete item?</DialogTitle>
-					<DialogDescription>
-						This action cannot be undone. This item will be permanently
-						removed from your stash.
-					</DialogDescription>
-				</DialogHeader>
-				<DialogFooter>
-					<Button
-						variant="ghost"
-						onClick={() => setDeleteOpen(false)}
-						disabled={deleting}
-					>
-						Cancel
-					</Button>
-					<Button
-						variant="destructive"
-						onClick={handleDelete}
-						disabled={deleting}
-					>
-						{deleting ? 'Deleting…' : 'Delete'}
-					</Button>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+		<ItemDeleteDialog
+			open={deleteOpen}
+			onOpenChange={setDeleteOpen}
+			deleting={deleting}
+			onConfirm={handleDelete}
+		/>
 		</>
 	);
 }
@@ -593,7 +448,7 @@ function EditFormFields({ item, form, onChange, isPro }: EditFormFieldsProps) {
 						id="item-language"
 						value={form.language}
 						onChange={(e) => set('language', e.target.value)}
-						className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+						className={NATIVE_SELECT_CLASSES}
 					>
 						{getLanguageOptions(form.language).map((lang) => (
 							<option key={lang.value} value={lang.value}>
@@ -683,4 +538,3 @@ function DrawerSkeleton() {
 		</div>
 	);
 }
-

@@ -2,6 +2,7 @@
 
 import { iconMap } from '@/lib/item-icons';
 import { formatDate } from '@/lib/format';
+import { makeItemKeyHandler } from '@/lib/item-key-handler';
 import { useItemDrawer } from '@/components/items/ItemDrawerProvider';
 import type { FavoriteItem } from '@/lib/db/favorites';
 
@@ -12,13 +13,7 @@ interface FavoriteItemRowProps {
 export function FavoriteItemRow({ item }: FavoriteItemRowProps) {
 	const Icon = iconMap[item.itemType.icon];
 	const { openItem } = useItemDrawer();
-
-	const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			openItem(item.id);
-		}
-	};
+	const handleKey = makeItemKeyHandler<HTMLDivElement>(() => openItem(item.id));
 
 	return (
 		<div

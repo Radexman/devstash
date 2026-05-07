@@ -3,15 +3,13 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Check, Copy, Crown, Loader2, Sparkles, X } from 'lucide-react';
+import { Check, Copy, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { optimizePrompt } from '@/actions/ai';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+  EDITOR_CHROME_BUTTON_CLASS,
+  EditorActionButton,
+} from '@/components/items/EditorActionButton';
 
 interface OptimizeContext {
   itemId: string;
@@ -127,7 +125,8 @@ export function MarkdownEditor({
 
         <div className="flex items-center gap-2">
           {showOptimize && optimize && (
-            <OptimizeButton
+            <EditorActionButton
+              label="Optimize"
               isPro={optimize.isPro}
               loading={optimizing}
               disabled={optimizing || Boolean(optimization)}
@@ -137,7 +136,7 @@ export function MarkdownEditor({
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
+            className={EDITOR_CHROME_BUTTON_CLASS}
             aria-label="Copy"
           >
             {copied ? (
@@ -182,50 +181,6 @@ export function MarkdownEditor({
         </div>
       )}
     </div>
-  );
-}
-
-interface OptimizeButtonProps {
-  isPro: boolean;
-  loading: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}
-
-function OptimizeButton({ isPro, loading, disabled, onClick }: OptimizeButtonProps) {
-  if (!isPro) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            aria-label="AI features require Pro subscription"
-            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc]"
-          >
-            <Crown className="h-3.5 w-3.5" />
-            Optimize
-          </TooltipTrigger>
-          <TooltipContent>AI features require Pro subscription</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label="Optimize prompt with AI"
-      className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-[#858585] transition-colors hover:bg-[#404040] hover:text-[#cccccc] disabled:opacity-60"
-    >
-      {loading ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-      ) : (
-        <Sparkles className="h-3.5 w-3.5" />
-      )}
-      Optimize
-    </button>
   );
 }
 

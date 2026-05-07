@@ -1,13 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Pencil, Star, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { EditCollectionDialog } from '@/components/collections/EditCollectionDialog';
-import { DeleteCollectionDialog } from '@/components/collections/DeleteCollectionDialog';
 import { toggleCollectionFavorite } from '@/actions/collections';
+import { useOptimisticToggle } from '@/hooks/use-optimistic-toggle';
+import { useCollectionDialogs } from '@/hooks/use-collection-dialogs';
 
 interface CollectionDetailActionsProps {
   collection: {
@@ -21,27 +19,25 @@ interface CollectionDetailActionsProps {
 export function CollectionDetailActions({
   collection,
 }: CollectionDetailActionsProps) {
-  const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(collection.isFavorite);
-  const [favoriting, setFavoriting] = useState(false);
 
-  const handleToggleFavorite = async () => {
-    if (favoriting) return;
-    const previous = isFavorite;
-    setIsFavorite(!previous);
-    setFavoriting(true);
-    const result = await toggleCollectionFavorite(collection.id);
-    setFavoriting(false);
-    if (!result.success) {
-      setIsFavorite(previous);
-      toast.error(result.error);
-      return;
-    }
-    setIsFavorite(result.data.isFavorite);
-    router.refresh();
-  };
+  const { run: handleToggleFavorite, busy: favoriting } = useOptimisticToggle(
+    () => toggleCollectionFavorite(collection.id),
+    {
+      applyOptimistic: () => setIsFavorite((v) => !v),
+      rollback: () => setIsFavorite(isFavorite),
+      applyResult: (data) => setIsFavorite(data.isFavorite),
+    },
+  );
+
+  const { setEditOpen, setDeleteOpen, dialogs } = useCollectionDialogs({
+    collection: {
+      id: collection.id,
+      name: collection.name,
+      description: collection.description,
+    },
+    redirectTo: '/collections',
+  });
 
   return (
     <>
@@ -79,22 +75,7 @@ export function CollectionDetailActions({
         </Button>
       </div>
 
-      <EditCollectionDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        collection={{
-          id: collection.id,
-          name: collection.name,
-          description: collection.description,
-        }}
-      />
-      <DeleteCollectionDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        collectionId={collection.id}
-        collectionName={collection.name}
-        redirectTo="/collections"
-      />
+      {dialogs}
     </>
   );
 }
